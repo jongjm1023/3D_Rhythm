@@ -11,6 +11,8 @@ public class GameManager : MonoBehaviour
     [Header("Rhythm Settings")]
     [SerializeField] private TouchBar touchBar;
     [SerializeField] private TMP_Text judgementText; // Supports TextMeshPro
+    [Tooltip("Adjust hit timing. Positive: Late Hit (Closer to Player), Negative: Early Hit (Further)")]
+    [SerializeField] private float judgementOffset = 0f;
     
     private Coroutine activeJudgementCoroutine;
     
@@ -110,7 +112,10 @@ public class GameManager : MonoBehaviour
                 
                 float tailZ = note.transform.position.z + (note.Length * 0.5f);
                 float barZ = touchBar.transform.position.z;
-                float dist = Mathf.Abs(tailZ - barZ);
+                
+                // Calculate distance relative to Adjusted Hit Line
+                float targetZ = barZ + judgementOffset; 
+                float dist = Mathf.Abs(tailZ - targetZ);
 
                 JudgeHit(note, dist, true); // true = isTail
             }
@@ -122,9 +127,9 @@ public class GameManager : MonoBehaviour
         int currentFloor = touchBar.CurrentFloorIndex;
         if (currentFloor == -1) return; // No floor selected
 
-        // Find closest note in this lane AND on this floor
+        // Find the note with the SMALLEST Z coordinate (furthest along the track)
         Note closestNote = null;
-        float minDist = float.MaxValue;
+        float minZ = float.MaxValue;
 
         // Clean nulls first
         for (int i = activeNotes.Count - 1; i >= 0; i--)
@@ -139,23 +144,27 @@ public class GameManager : MonoBehaviour
             if (note.LaneIndex != laneIndex) continue;
             if (note.FloorIndex != currentFloor) continue;
 
-            // Calculate distance relative to TouchBar's Z position
-            // For HEAD detection
-            // Head is at Center - Length/2 (Front facing the player)
-            float headZ = note.transform.position.z - (note.Length * 0.5f);
-            float barZ = touchBar.transform.position.z;
-            float dist = Mathf.Abs(headZ - barZ);
-
-            if (dist < minDist)
+            // User requested to judge based on smallest Z (furthest note)
+            // Note moves +Z -> -Z. Smallest Z means it's the "oldest" note on screen.
+            float noteZ = note.transform.position.z;
+            
+            if (noteZ < minZ)
             {
-                minDist = dist;
+                minZ = noteZ;
                 closestNote = note;
             }
         }
 
         if (closestNote != null)
         {
-            JudgeHit(closestNote, minDist, false);
+            // Now calculate key distance for judgement on this specific note
+            float headZ = closestNote.transform.position.z - (closestNote.Length * 0.5f);
+            float barZ = touchBar.transform.position.z;
+            
+            float targetZ = barZ + judgementOffset;
+            float dist = Mathf.Abs(headZ - targetZ);
+
+            JudgeHit(closestNote, dist, false);
         }
     }
 
@@ -165,22 +174,22 @@ public class GameManager : MonoBehaviour
         string judgement = "";
         int scoreAdd = 0;
 
-        if (distance <= 0.3f)
+        if (distance <= 0.5f)
         {
             judgement = "PERFECT";
             scoreAdd = 500;
         }
-        else if (distance <= 0.5f)
+        else if (distance <= 0.8f)
         {
             judgement = "GREAT";
             scoreAdd = 300;
         }
-        else if (distance <= 0.8f)
+        else if (distance <= 1.1f)
         {
             judgement = "GOOD";
             scoreAdd = 100;
         }
-        else if (distance <= 1.2f)
+        else if (distance <= 1.4f)
         {
             judgement = "BAD";
             scoreAdd = 50;

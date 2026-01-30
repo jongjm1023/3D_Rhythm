@@ -1797,6 +1797,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   touchBar: {fileID: 2026860321}
   judgementText: {fileID: 1111353623}
+  judgementOffset: 0
 --- !u!1 &1930659193
 GameObject:
   m_ObjectHideFlags: 0
@@ -1954,7 +1955,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9b1a35c5e5f7a408d1f3de16b25b32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TouchBar
-  sensitivity: 0.1
+  sensitivity: 0.15
   minHeight: 0.5
   maxHeight: 8
   floorVisuals:
