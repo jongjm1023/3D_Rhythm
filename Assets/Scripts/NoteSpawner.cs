@@ -32,8 +32,11 @@ public class NoteSpawner : MonoBehaviour
         if (notePrefab == null) return;
 
         // Select random X and Y from the predefined arrays
-        float randomX = xPositions[Random.Range(0, xPositions.Length)];
-        float randomY = yPositions[Random.Range(0, yPositions.Length)];
+        int xIndex = Random.Range(0, xPositions.Length);
+        int yIndex = Random.Range(0, yPositions.Length);
+
+        float randomX = xPositions[xIndex];
+        float randomY = yPositions[yIndex];
         
         Vector3 spawnPos = new Vector3(randomX, randomY, spawnZ);
 
@@ -43,6 +46,31 @@ public class NoteSpawner : MonoBehaviour
         if (noteScript != null)
         {
             noteScript.SetSpeed(noteSpeed);
+
+            // Set Color based on Floor (Y Index)
+            // yPositions = { 1.75f, 4.25f, 6.75f } -> Index 0, 1, 2
+            // 0 (1F): Electric Purple (150, 0, 255)
+            // 1 (2F): Cyan (0, 255, 255)
+            // 2 (3F): Hot Pink (255, 0, 150)
+
+            Color noteColor = Color.white;
+            switch (yIndex)
+            {
+                case 0: // 1F
+                    noteColor = new Color(150f/255f, 0f, 1f); 
+                    break;
+                case 1: // 2F
+                    noteColor = new Color(0f, 1f, 1f);
+                    break;
+                case 2: // 3F
+                    noteColor = new Color(1f, 0f, 150f/255f);
+                    break;
+            }
+            noteScript.SetColor(noteColor);
+
+            // Initialize Data and Register
+            noteScript.Initialize(yIndex, xIndex, noteSpeed);
+            GameManager.Instance.RegisterNote(noteScript);
         }
     }
 }

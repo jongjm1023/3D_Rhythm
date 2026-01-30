@@ -19,9 +19,31 @@ public class Note : MonoBehaviour
             Destroy(gameObject);
         }
     }
-
     public void SetSpeed(float newSpeed)
     {
         speed = newSpeed;
+    }
+
+    public int FloorIndex { get; private set; }
+    public int LaneIndex { get; private set; }
+    public bool IsHit { get; set; } = false; // Prevent double hitting
+
+    public void Initialize(int floorIndex, int laneIndex, float moveSpeed)
+    {
+        FloorIndex = floorIndex;
+        LaneIndex = laneIndex;
+        speed = moveSpeed;
+    }
+
+    public void SetColor(Color color)
+    {
+        Renderer rend = GetComponent<Renderer>();
+        if (rend != null)
+        {
+            rend.material.color = color;
+            // Enable emission for "Neon" look
+            rend.material.EnableKeyword("_EMISSION");
+            rend.material.SetColor("_EmissionColor", color); 
+        }
     }
 }
