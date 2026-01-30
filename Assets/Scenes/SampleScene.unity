@@ -1542,7 +1542,7 @@ MonoBehaviour:
   noteApproachTime: 2
   spawnZ: 50
   noteSpeed: 10
-  noteSpawnOffset: 0.5
+  noteSpawnOffset: 0.45
 --- !u!82 &1784803443
 AudioSource:
   m_ObjectHideFlags: 0
