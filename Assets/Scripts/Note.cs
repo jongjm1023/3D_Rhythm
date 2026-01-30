@@ -24,15 +24,32 @@ public class Note : MonoBehaviour
         speed = newSpeed;
     }
 
+    public enum NoteType { Normal, Long }
+    
+    public NoteType Type { get; private set; }
+    public float Length { get; private set; } = 1.0f;
+    public bool IsHolding { get; set; } = false; // For Long Note logic
+
     public int FloorIndex { get; private set; }
     public int LaneIndex { get; private set; }
     public bool IsHit { get; set; } = false; // Prevent double hitting
 
-    public void Initialize(int floorIndex, int laneIndex, float moveSpeed)
+    public void Initialize(int floorIndex, int laneIndex, float moveSpeed, NoteType type = NoteType.Normal, float length = 1.0f)
     {
         FloorIndex = floorIndex;
         LaneIndex = laneIndex;
         speed = moveSpeed;
+        Type = type;
+        Length = length;
+
+        if (Type == NoteType.Long)
+        {
+            // Scale visuals for Long Note
+            // Assuming default scale Z is 1 and length 1 corresponds to 1 unit.
+            Vector3 scale = transform.localScale;
+            scale.z = Length;
+            transform.localScale = scale;
+        }
     }
 
     public void SetColor(Color color)
