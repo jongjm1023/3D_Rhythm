@@ -1,0 +1,111 @@
+.root-container {
+    flex-grow: 1;
+    background-color: rgb(20, 20, 25);
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.title-label {
+    font-size: 80px;
+    -unity-font-style: bold;
+    color: rgb(0, 255, 255);
+    margin-bottom: 50px;
+    text-shadow: 2px 2px 10px rgba(0, 255, 255, 0.5);
+}
+
+.menu-container {
+    width: 300px;
+    align-items: stretch;
+}
+
+.menu-button {
+    height: 60px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    margin-bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: white;
+    transition-duration: 0.2s;
+}
+
+.menu-button:hover {
+    background-color: rgba(0, 255, 255, 0.3);
+    border-color: rgb(0, 255, 255);
+    scale: 1.05;
+}
+
+.menu-button:active {
+    background-color: rgba(0, 255, 255, 0.5);
+    scale: 0.95;
+}
+
+/* Settings Overlay */
+.settings-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    align-items: center;
+    justify-content: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.settings-panel {
+    width: 500px;
+    background-color: rgb(35, 35, 40);
+    border-radius: 20px;
+    padding: 30px;
+    border-width: 2px;
+    border-color: rgb(0, 255, 255);
+}
+
+.settings-title {
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: white;
+    margin-bottom: 30px;
+    -unity-text-align: middle-center;
+}
+
+.setting-row {
+    margin-bottom: 20px;
+}
+
+.setting-label {
+    font-size: 20px;
+    color: rgb(200, 200, 200);
+    margin-bottom: 10px;
+}
+
+.setting-slider {
+    margin-bottom: 5px;
+}
+
+.value-label {
+    font-size: 16px;
+    color: rgb(0, 255, 255);
+    -unity-text-align: middle-right;
+}
+
+.close-button {
+    margin-top: 20px;
+    height: 50px;
+    font-size: 20px;
+    background-color: rgb(200, 50, 50);
+    color: white;
+    border-radius: 10px;
+    border-width: 0;
+}
+
+.close-button:hover {
+    background-color: rgb(255, 80, 80);
+}

@@ -49,6 +49,10 @@ public class GameManager : MonoBehaviour
                 Camera.main.clearFlags = CameraClearFlags.SolidColor;
                 Camera.main.backgroundColor = new Color(0f, 0f, 30f/255f);
             }
+
+            // Load Judgement Offset
+            judgementOffset = PlayerPrefs.GetFloat("JudgementOffset", 0f);
+            Debug.Log($"GameManager: Loaded Judgement Offset: {judgementOffset}");
         }
         else
         {

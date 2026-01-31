@@ -1,0 +1,42 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Style src="MainMenu.uss" />
+    <ui:VisualElement name="Root" class="root-container">
+        <!-- Title Section -->
+        <ui:Label text="3D RHYTHM" name="TitleLabel" class="title-label" />
+
+        <!-- Menu Buttons -->
+        <ui:VisualElement name="MenuContainer" class="menu-container">
+            <ui:Button text="START" name="StartButton" class="menu-button" />
+            <ui:Button text="SETTINGS" name="SettingsButton" class="menu-button" />
+            <ui:Button text="EXIT" name="ExitButton" class="menu-button" />
+        </ui:VisualElement>
+
+        <!-- Settings Overlay (Hidden by default) -->
+        <ui:VisualElement name="SettingsOverlay" class="settings-overlay hidden">
+            <ui:VisualElement class="settings-panel">
+                <ui:Label text="SETTINGS" class="settings-title" />
+                
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Master Volume" class="setting-label" />
+                    <ui:Slider high-value="1" low-value="0" value="1" name="VolumeSlider" class="setting-slider" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Audio Offset (ms)" class="setting-label" />
+                    <!-- Using SliderInt for offset -200ms to +200ms -->
+                    <ui:SliderInt high-value="200" low-value="-200" value="0" name="OffsetSlider" class="setting-slider" />
+                    <ui:Label text="0 ms" name="OffsetValueLabel" class="value-label" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Judgement Offset (Distance)" class="setting-label" />
+                    <!-- Using Slider for distance offset -2.0 to +2.0 -->
+                    <ui:Slider high-value="2.0" low-value="-2.0" value="0" name="JudgementOffsetSlider" class="setting-slider" />
+                    <ui:Label text="0.00" name="JudgementOffsetValueLabel" class="value-label" />
+                </ui:VisualElement>
+
+                <ui:Button text="CLOSE" name="CloseSettingsButton" class="close-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
