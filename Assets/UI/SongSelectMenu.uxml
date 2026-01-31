@@ -1,0 +1,30 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/SongSelectStyle.uss?fileID=7433441132597879392&amp;guid=6a707d7cbae04444a818969412828fdf&amp;type=3#SongSelectStyle" />
+    <ui:VisualElement name="Root" class="root-container">
+        <!-- Title Header (Optional or move inside panels) -->
+        <ui:Label text="SELECT SONG" class="header-title" />
+
+        <ui:VisualElement name="ContentContainer" class="content-container">
+            <!-- Left Panel: Album Art & Info -->
+            <ui:VisualElement name="LeftPanel" class="left-panel">
+                <ui:VisualElement name="AlbumCover" class="album-cover" />
+                <ui:Label name="DetailTitle" text="Select a Song" class="detail-title" />
+                <ui:Label name="DetailArtist" text="..." class="detail-artist" />
+                <ui:Label name="DetailLevel" text="Lv. --" class="detail-level" />
+                <ui:Label name="DetailBPM" text="BPM: --" class="detail-bpm" />
+                
+                <ui:VisualElement class="stats-container">
+                    <ui:Label name="DetailBestScore" text="Best Score: 0" class="detail-stats" />
+                    <ui:Label name="DetailMaxCombo" text="Max Combo: 0" class="detail-stats" />
+                </ui:VisualElement>
+
+                <ui:Button name="PlayButton" text="PLAY START" class="play-button" />
+            </ui:VisualElement>
+
+            <!-- Right Panel: Song List -->
+            <ui:VisualElement name="RightPanel" class="right-panel">
+                <ui:ScrollView name="SongList" class="song-list" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

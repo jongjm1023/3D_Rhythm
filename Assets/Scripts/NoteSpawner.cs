@@ -64,7 +64,27 @@ public class NoteSpawner : MonoBehaviour
 
         if (beatmapFile != null)
         {
-            hitNotes = parser.Parse(beatmapFile.text);
+            // Check for SongManager
+            if (SongManager.Instance != null && SongManager.Instance.SelectedSong != null)
+            {
+                var selected = SongManager.Instance.SelectedSong;
+                Debug.Log($"NoteSpawner: Loading Selected Song - {selected.title}");
+                
+                if (selected.beatmap != null)
+                {
+                    hitNotes = parser.Parse(selected.beatmap.text);
+                }
+                
+                if (selected.musicInfo != null)
+                {
+                    musicClip = selected.musicInfo;
+                }
+            }
+            else
+            {
+               hitNotes = parser.Parse(beatmapFile.text);
+            }
+
             StartGame();
         }
     }

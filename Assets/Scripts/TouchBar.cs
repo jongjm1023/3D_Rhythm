@@ -60,39 +60,58 @@ public class TouchBar : MonoBehaviour
         }
     }
 
+    [Header("Color Settings")]
+    // Make sure these match NoteSpawner settings in Inspector!
+    [SerializeField] private Color[] floorColors; 
+
+    private void Start()
+    {
+        // Default Fallback if empty
+        if (floorColors == null || floorColors.Length == 0)
+        {
+            floorColors = new Color[]
+            {
+                new Color(150f/255f, 0f, 1f), 
+                new Color(0f, 1f, 1f), 
+                new Color(1f, 0f, 150f/255f)
+            };
+        }
+    }
+
     private void UpdateVisuals()
     {
         if (floorVisuals == null) return;
+        if (floorColors == null || floorColors.Length == 0) Start(); // Ensure Init
 
-        // Define specific colors for consistency with Notes
-        // 0: Electric Purple, 1: Cyan, 2: Hot Pink
-        Color[] floorColors = new Color[]
+        if (stageFloors != null)
         {
-            new Color(150f/255f, 0f, 1f),     // 1F
-            new Color(0f, 1f, 1f),            // 2F
-            new Color(1f, 0f, 150f/255f)      // 3F
-        };
-
-        if(CurrentFloorIndex == 1){
-            stageFloors[0].SetActive(true);
-            stageFloors[1].SetActive(false);
-        }
-        else if(CurrentFloorIndex == 2){
-            stageFloors[0].SetActive(false);
-            stageFloors[1].SetActive(true);
-        }
-        else{
-            stageFloors[0].SetActive(false);
-            stageFloors[1].SetActive(false);
+            if(CurrentFloorIndex == 0)
+            {
+                if(stageFloors.Length > 0 && stageFloors[0]) stageFloors[0].SetActive(true);
+                if(stageFloors.Length > 1 && stageFloors[1]) stageFloors[1].SetActive(false);
+                if(stageFloors.Length > 2 && stageFloors[2]) stageFloors[2].SetActive(false);
+            }
+            else if(CurrentFloorIndex == 1)
+            {
+                if(stageFloors.Length > 0 && stageFloors[0]) stageFloors[0].SetActive(false);
+                if(stageFloors.Length > 1 && stageFloors[1]) stageFloors[1].SetActive(true);
+                if(stageFloors.Length > 2 && stageFloors[2]) stageFloors[2].SetActive(false);
+            }
+            else
+            {
+                if(stageFloors.Length > 0 && stageFloors[0]) stageFloors[0].SetActive(false);
+                if(stageFloors.Length > 1 && stageFloors[1]) stageFloors[1].SetActive(false);
+                if(stageFloors.Length > 2 && stageFloors[2]) stageFloors[2].SetActive(true);
+            }
         }
         
         for (int i = 0; i < floorVisuals.Length; i++)
         {
             if (floorVisuals[i] == null) continue;
 
-            // Updated: Apply to all child renderers as requested
             Renderer[] renderers = floorVisuals[i].GetComponentsInChildren<Renderer>();
             
+            // Use Configured Color
             Color baseColor = (i < floorColors.Length) ? floorColors[i] : Color.white;
             
             // Determine styles based on selection

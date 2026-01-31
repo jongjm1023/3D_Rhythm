@@ -58,6 +58,15 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        // Debugging Input
+        // if (UnityEngine.InputSystem.Keyboard.current.aKey.wasPressedThisFrame) Debug.Log("GameManager: A key pressed");
+        
+        if (touchBar == null)
+        {
+             Debug.LogError("GameManager: TouchBar reference is MISSING in Inspector!");
+             return;
+        }
+
         // Developer Shortcut: R to End Game immediately
         if (UnityEngine.InputSystem.Keyboard.current != null && 
             UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame)
@@ -162,8 +171,16 @@ public class GameManager : MonoBehaviour
 
     private void TryHitNote(int laneIndex)
     {
+        if (touchBar == null) return;
+        
         int currentFloor = touchBar.CurrentFloorIndex;
-        if (currentFloor == -1) return; // No floor selected
+        // Debug.Log($"TryHitNote Lane {laneIndex}, Floor {currentFloor}");
+        
+        if (currentFloor == -1) 
+        {
+             // Debug.LogWarning("TryHitNote: No floor selected (Index -1)");
+             return; 
+        }
 
         // Find the note with the SMALLEST Z coordinate (furthest along the track)
         Note closestNote = null;
@@ -368,6 +385,25 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    [SerializeField] private Button returnButton; // Drag Button here
+
+    // ... (existing code)
+
+    private void Start()
+    {
+        if (returnButton != null)
+        {
+            returnButton.onClick.AddListener(OnReturnToMenu);
+            returnButton.gameObject.SetActive(false); // Hide initially
+        }
+    }
+
+    public void OnReturnToMenu()
+    {
+        Time.timeScale = 1.0f; // Reset time just in case
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Songs");
+    }
+
     public void EndGame()
     {
         Debug.Log("Game Over!");
@@ -378,6 +414,7 @@ public class GameManager : MonoBehaviour
         if (judgementText != null) judgementText.gameObject.SetActive(false);
 
         if (resultPanel != null) resultPanel.SetActive(true);
+        if (returnButton != null) returnButton.gameObject.SetActive(true); // Show Button
 
         // Accuracy Calculation (Weighted)
         // Perfect=100%, Great=80%, Good=50%, Bad=20%, Miss=0%
@@ -398,6 +435,33 @@ public class GameManager : MonoBehaviour
                                      $"GOOD: {goodCount}\n" +
                                      $"BAD: {badCount}\n" +
                                      $"MISS: {missCount}";
+        }
+        
+        // Save Stats to SongManager
+        // Ensure SongManager exists and has a selected song
+        if (SongManager.Instance != null && SongManager.Instance.SelectedSong != null)
+        {
+            SongData currentSong = SongManager.Instance.SelectedSong;
+            bool changed = false;
+
+            if (Score > currentSong.maxScore)
+            {
+                currentSong.maxScore = Score;
+                changed = true;
+                Debug.Log("New Best Score!");
+            }
+            
+            if (maxCombo > currentSong.maxCombo)
+            {
+                currentSong.maxCombo = maxCombo;
+                changed = true;
+                Debug.Log("New Max Combo!");
+            }
+
+            if (changed)
+            {
+                SongManager.Instance.SaveSongStats(currentSong);
+            }
         }
     }
 }

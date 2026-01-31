@@ -25,15 +25,14 @@ public class Note : MonoBehaviour
         Destroy(bottomGlow.GetComponent<Collider>());
         
         // Position at the bottom face
-        // Parent pivot is likely center (0,0,0). Bottom face is at y = -0.5.
-        bottomGlow.transform.localPosition = new Vector3(0, -0.5f, 0);
+        // Parent (Note) is 1 unit high, bottom is at -0.5.
+        // Glow is 0.15 high, half height is 0.075.
+        // To sit exactly below without overlap: -0.5 - 0.075 = -0.575.
+        // Adding a tiny buffer (-0.576f) to ensure no Z-fighting at the seam.
+        bottomGlow.transform.localPosition = new Vector3(0, -0.576f, 0);
         bottomGlow.transform.localRotation = Quaternion.identity;
         
-        // Scale to be thin and slightly wider? 
-        // User asked for "Bottom face", so match X/Z size (1,1). Y thickness small (0.05).
-        // Since parent might be scaled, local scale 1, 0.05, 1 works relative to parent.
-        // Wait, if parent Y scale changes, this thickness changes too. 
-        // Assuming Note Y scale is usually 1.
+        // Scale to be thin
         bottomGlow.transform.localScale = new Vector3(1.0f, 0.15f, 1.0f); 
     }
 
