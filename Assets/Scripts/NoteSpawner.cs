@@ -18,7 +18,7 @@ public class NoteSpawner : MonoBehaviour
 
     // Specific spawn positions (Restored)
     private readonly float[] xPositions = { -3.75f, -1.25f, 1.25f, 3.75f };
-    private readonly float[] yPositions = { 1.75f, 4.25f, 6.75f };
+    private readonly float[] yPositions = { 1.25f, 4f, 6.5f };
 
     private List<MapData.HitInfo> hitNotes = new List<MapData.HitInfo>();
     private int currentNoteIndex = 0;
@@ -27,8 +27,29 @@ public class NoteSpawner : MonoBehaviour
 
     private BeatmapParser parser;
 
+    [System.Serializable]
+    public struct FloorColorSettings
+    {
+        public string label; // Just for inspector readability (e.g., "1st Floor")
+        public Color noteColor;
+        public Color glowColor;
+    }
+
+    [Header("Color Settings")]
+    [SerializeField] private FloorColorSettings[] floorSettings; // Assign 3 elements in Inspector
+
     private void Start()
     {
+        // Initialize default settings if empty (fallback)
+        if (floorSettings == null || floorSettings.Length == 0)
+        {
+            floorSettings = new FloorColorSettings[3];
+            // defaults
+            floorSettings[0] = new FloorColorSettings { label = "1F", noteColor = new Color(150f/255f, 0, 1), glowColor = new Color(150f/255f, 0, 1) * 0.6f };
+            floorSettings[1] = new FloorColorSettings { label = "2F", noteColor = Color.cyan, glowColor = Color.cyan * 0.6f };
+            floorSettings[2] = new FloorColorSettings { label = "3F", noteColor = new Color(1, 0, 150f/255f), glowColor = new Color(1, 0, 150f/255f) * 0.6f };
+        }
+        
         parser = gameObject.AddComponent<BeatmapParser>();
         
         // Auto-get AudioSource if not assigned
@@ -156,19 +177,27 @@ public class NoteSpawner : MonoBehaviour
         if (noteScript != null)
         {
             Color noteColor = Color.white;
-            switch (data.floor)
+            Color glowColor = Color.white;
+
+            // Use Configured Colors
+            if (floorSettings != null && data.floor >= 0 && data.floor < floorSettings.Length)
             {
-                case 0: // 1F
-                    noteColor = new Color(150f/255f, 0f, 1f); 
-                    break;
-                case 1: // 2F
-                    noteColor = new Color(0f, 1f, 1f);
-                    break;
-                case 2: // 3F
-                    noteColor = new Color(1f, 0f, 150f/255f);
-                    break;
+                noteColor = floorSettings[data.floor].noteColor;
+                glowColor = floorSettings[data.floor].glowColor;
             }
-            noteScript.SetColor(noteColor);
+            else
+            {
+                // Fallback hardcoded if settings fails
+                switch (data.floor)
+                {
+                    case 0: noteColor = new Color(150f/255f, 0f, 1f); break;
+                    case 1: noteColor = new Color(0f, 1f, 1f); break;
+                    case 2: noteColor = new Color(1f, 0f, 150f/255f); break;
+                }
+                glowColor = noteColor * 0.6f;
+            }
+
+            noteScript.SetColor(noteColor, glowColor);
 
             // Initialize Data and Register
             noteScript.Initialize(data.floor, data.lane, noteSpeed, data.type, data.length);
