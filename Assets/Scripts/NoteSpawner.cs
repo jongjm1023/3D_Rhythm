@@ -122,6 +122,13 @@ public class NoteSpawner : MonoBehaviour
     {
         if (!isPlaying) return;
 
+        // Skip to First Note Debug
+        if (UnityEngine.InputSystem.Keyboard.current != null && 
+            UnityEngine.InputSystem.Keyboard.current.wKey.wasPressedThisFrame)
+        {
+            SkipToFirstNote();
+        }
+
         // Current Song Time
         // If AudioSource is playing, use its time for exact sync. Otherwise use Time.time offset.
         float songTime = (audioSource != null && audioSource.isPlaying) 
@@ -149,6 +156,45 @@ public class NoteSpawner : MonoBehaviour
                 break; // Next note is too far in future
             }
         }
+    }
+
+    private void SkipToFirstNote()
+    {
+        if (hitNotes.Count == 0) return;
+
+        // Calculate Target Time
+        // We want to be 2.0 seconds BEFORE the first note spawns
+        MapData.HitInfo firstNote = hitNotes[0];
+        
+        float approachTime = spawnZ / noteSpeed; 
+        float firstSpawnTime = (firstNote.time + noteSpawnOffset) - approachTime;
+        
+        // Target: 2.0s before spawn
+        float targetTime = firstSpawnTime - 2.0f;
+        
+        // Clamp to 0
+        if (targetTime < 0) targetTime = 0f;
+
+        // Don't skip if we are already past that time
+        float currentSongTime = (audioSource != null && audioSource.isPlaying) ? audioSource.time : (Time.time - mapStartTime);
+        if (currentSongTime >= targetTime) 
+        {
+            Debug.Log("NoteSpawner: Already past skip target time.");
+            return;
+        }
+
+        Debug.Log($"NoteSpawner: Skipping from {currentSongTime:F2}s to {targetTime:F2}s (First Spawn: {firstSpawnTime:F2}s)");
+
+        // Apply Skip
+        if (audioSource != null)
+        {
+            audioSource.time = targetTime;
+        }
+        
+        // Update Internal Timer Reference
+        // current Time.time should represent targetTime
+        // mapStartTime = Time.time - targetTime
+        mapStartTime = Time.time - targetTime;
     }
 
     private void SpawnSpecificNote(MapData.HitInfo data)
