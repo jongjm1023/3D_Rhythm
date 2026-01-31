@@ -156,6 +156,27 @@ public class NoteSpawner : MonoBehaviour
                 break; // Next note is too far in future
             }
         }
+
+        // Check for Game End
+        // If all notes are spawned AND no active notes in GameManager (optional, or just time)
+        // Let's use Time: If songTime > lastNoteTime + 2s?
+        if (hitNotes.Count > 0 && currentNoteIndex >= hitNotes.Count)
+        {
+            // All notes spawned.
+            // Check if audio has finished or songTime is past last note
+            float lastNoteTime = hitNotes[hitNotes.Count - 1].time;
+            
+            // Allow buffer for last note to be hit/missed (e.g. +3s)
+            if (songTime > lastNoteTime + 3.0f)
+            {
+                // Trigger End Game (One-shot check)
+                if (isPlaying)
+                {
+                    isPlaying = false;
+                    GameManager.Instance.EndGame();
+                }
+            }
+        }
     }
 
     private void SkipToFirstNote()

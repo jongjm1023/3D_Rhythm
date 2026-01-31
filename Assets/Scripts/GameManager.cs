@@ -16,7 +16,22 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text scoreText; // UI for Score
     [Tooltip("Adjust hit timing. Positive: Late Hit (Closer to Player), Negative: Early Hit (Further)")]
     [SerializeField] private float judgementOffset = 0f;
-    
+    [Header("Result UI")]
+    [SerializeField] private GameObject resultPanel;
+    [SerializeField] private TMP_Text resultScoreText;
+    [SerializeField] private TMP_Text resultMaxComboText;
+    [SerializeField] private TMP_Text resultAccuracyText;
+    [SerializeField] private TMP_Text resultDetailsText; // P/G/G/B/M counts
+
+    // Stats
+    private int maxCombo;
+    private int perfectCount;
+    private int greatCount;
+    private int goodCount;
+    private int badCount;
+    private int missCount;
+    private int totalNotes; // For accuracy calculation
+
     private Coroutine activeJudgementCoroutine;
     
     // Track active notes
@@ -43,8 +58,19 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        // Developer Shortcut: R to End Game immediately
+        if (UnityEngine.InputSystem.Keyboard.current != null && 
+            UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            EndGame();
+        }
+
         HandleRhythmInput();
     }
+
+    // ... (rest of file) ...
+
+
 
     public void RegisterNote(Note note)
     {
@@ -67,6 +93,9 @@ public class GameManager : MonoBehaviour
         Debug.Log("Note Missed (Pass)");
         ShowJudgementUI("MISS");
         
+        missCount++;
+        totalNotes++;
+
         // Reset Combo
         Combo = 0;
         UpdateComboUI();
@@ -188,31 +217,39 @@ public class GameManager : MonoBehaviour
             judgement = "PERFECT";
             scoreAdd = 500;
             Combo++;
+            perfectCount++;
         }
         else if (distance <= 0.8f)
         {
             judgement = "GREAT";
             scoreAdd = 300;
             Combo++;
+            greatCount++;
         }
         else if (distance <= 1.1f)
         {
             judgement = "GOOD";
             scoreAdd = 100;
             Combo++;
+            goodCount++;
         }
         else if (distance <= 1.4f)
         {
             judgement = "BAD";
             scoreAdd = 50;
             Combo = 0;
+            badCount++;
         }
         else
         {
             judgement = "MISS";
             scoreAdd = 0;
             Combo = 0;
+            missCount++;
         }
+
+        totalNotes++;
+        if (Combo > maxCombo) maxCombo = Combo;
 
         // Apply Bonus: +20 Score per 10 Combo
         // 10-19: +20, 20-29: +40, etc.
@@ -328,6 +365,39 @@ public class GameManager : MonoBehaviour
         if (scoreText != null)
         {
             scoreText.text = $"SCORE: {Score}";
+        }
+    }
+
+    public void EndGame()
+    {
+        Debug.Log("Game Over!");
+        
+        // Hide In-Game UI
+        if (scoreText != null) scoreText.gameObject.SetActive(false);
+        if (comboText != null) comboText.gameObject.SetActive(false);
+        if (judgementText != null) judgementText.gameObject.SetActive(false);
+
+        if (resultPanel != null) resultPanel.SetActive(true);
+
+        // Accuracy Calculation (Weighted)
+        // Perfect=100%, Great=80%, Good=50%, Bad=20%, Miss=0%
+        float totalWeight = totalNotes * 100f;
+        float currentWeight = (perfectCount * 100f) + (greatCount * 80f) + (goodCount * 50f) + (badCount * 20f);
+        
+        float accuracy = 0f;
+        if (totalNotes > 0) accuracy = (currentWeight / totalWeight) * 100f;
+
+        if (resultScoreText != null) resultScoreText.text = $"Score: {Score}";
+        if (resultMaxComboText != null) resultMaxComboText.text = $"Max Combo: {maxCombo}";
+        if (resultAccuracyText != null) resultAccuracyText.text = $"Accuracy: {accuracy:F2}%";
+        
+        if (resultDetailsText != null)
+        {
+            resultDetailsText.text = $"PERFECT: {perfectCount}\n" +
+                                     $"GREAT: {greatCount}\n" +
+                                     $"GOOD: {goodCount}\n" +
+                                     $"BAD: {badCount}\n" +
+                                     $"MISS: {missCount}";
         }
     }
 }
