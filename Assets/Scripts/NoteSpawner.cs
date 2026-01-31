@@ -115,27 +115,7 @@ public class NoteSpawner : MonoBehaviour
         while (currentNoteIndex < hitNotes.Count)
         {
             MapData.HitInfo noteData = hitNotes[currentNoteIndex];
-            
-            // Calculate Spawn Time
-            // We want the note to arrive at Z=0 exactly at noteData.time
-            // Distance = spawnZ - 0 = spawnZ
-            // Speed = Distance / ApproachTime (if ApproachTime is fixed)
-            // Or if Speed is fixed, ApproachTime = Distance / Speed.
-            // Let's stick to fixed Speed from Inspector (noteSpeed)
-            // Then ApproachTime = spawnZ / noteSpeed.
-            
             float approachTime = spawnZ / noteSpeed; 
-            
-            // Apply Offset: If Offset is positive, we want to delay the spawn (Spawn later).
-            // HitTime is fixed by music.
-            // Only SpawnTime changes.
-            // To delay note (arrive later), we reduce spawned lead time? No.
-            // If I want the note to arrive at T=10, but user feels it is early (arrives at T=9.9).
-            // That means the note spawned too early. We should spawn it later.
-            // SpawnTime = (noteData.time + offset) - approachTime.
-            // If offset is +0.1, TargetHitTime becomes 10.1. SpawnTime becomes later.
-            // Effectively delaying the note.
-            
             float spawnTime = (noteData.time + noteSpawnOffset) - approachTime;
 
             if (songTime >= spawnTime)

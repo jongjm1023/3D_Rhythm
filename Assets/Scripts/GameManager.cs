@@ -7,10 +7,13 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     public int Score { get; private set; }
+    public int Combo { get; private set; }
 
     [Header("Rhythm Settings")]
     [SerializeField] private TouchBar touchBar;
     [SerializeField] private TMP_Text judgementText; // Supports TextMeshPro
+    [SerializeField] private TMP_Text comboText; // UI for Combo
+    [SerializeField] private TMP_Text scoreText; // UI for Score
     [Tooltip("Adjust hit timing. Positive: Late Hit (Closer to Player), Negative: Early Hit (Further)")]
     [SerializeField] private float judgementOffset = 0f;
     
@@ -62,6 +65,12 @@ public class GameManager : MonoBehaviour
     public void OnNoteMiss()
     {
         Debug.Log("Note Missed (Pass)");
+        ShowJudgementUI("MISS");
+        
+        // Reset Combo
+        Combo = 0;
+        UpdateComboUI();
+
         // Find the note that passed and remove it from list? 
         // Note.cs calls this before Destroy, so we should allow it to be removed via OnDestroy or explicit call.
         // Actually, Note.cs destroys itself, so we should clean up nulls or remove in OnDestroy.
@@ -178,27 +187,43 @@ public class GameManager : MonoBehaviour
         {
             judgement = "PERFECT";
             scoreAdd = 500;
+            Combo++;
         }
         else if (distance <= 0.8f)
         {
             judgement = "GREAT";
             scoreAdd = 300;
+            Combo++;
         }
         else if (distance <= 1.1f)
         {
             judgement = "GOOD";
             scoreAdd = 100;
+            Combo++;
         }
         else if (distance <= 1.4f)
         {
             judgement = "BAD";
             scoreAdd = 50;
+            Combo = 0;
         }
         else
         {
             judgement = "MISS";
             scoreAdd = 0;
+            Combo = 0;
         }
+
+        // Apply Bonus: +20 Score per 10 Combo
+        // 10-19: +20, 20-29: +40, etc.
+        if (scoreAdd > 0 && Combo >= 10)
+        {
+            int bonus = (Combo / 10) * 20;
+            scoreAdd += bonus;
+        }
+
+        UpdateComboUI();
+
 
         // Logic branching based on Note Type and Hit Type
         if (note.Type == Note.NoteType.Long)
@@ -234,6 +259,7 @@ public class GameManager : MonoBehaviour
                     Debug.Log($"Long Note Finish! {judgement}");
                     ShowJudgementUI(judgement);
                     Score += scoreAdd; // Add score on completion
+                    UpdateScoreUI();
                     DestroyNote(note);
                 }
                 else
@@ -252,6 +278,7 @@ public class GameManager : MonoBehaviour
             {
                 Debug.Log($"Hit! {judgement} (Dist: {distance:F2})");
                 Score += scoreAdd;
+                UpdateScoreUI();
                 ShowJudgementUI(judgement);
                 DestroyNote(note);
             }
@@ -283,5 +310,24 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
         if (judgementText != null) judgementText.text = "";
+    }
+
+    private void UpdateComboUI()
+    {
+        if (comboText != null)
+        {
+            if (Combo > 0)
+                comboText.text = $"COMBO {Combo}";
+            else
+                comboText.text = ""; // Hide if 0
+        }
+    }
+
+    private void UpdateScoreUI()
+    {
+        if (scoreText != null)
+        {
+            scoreText.text = $"SCORE: {Score}";
+        }
     }
 }
