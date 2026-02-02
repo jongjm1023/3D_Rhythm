@@ -137,14 +137,18 @@ public class Note : MonoBehaviour
         speed = moveSpeed;
         Type = type;
         
-        // Calculate Physical Length (Z Units) based on Duration (Time) and Speed (Units/Time)
-        // Distance = Speed * Time
-        float physicalLength = durationSeconds * speed;
-        
-        Length = physicalLength;
-
-        if (Type == NoteType.Long)
+        if (Type == NoteType.Normal)
         {
+            // Normal Note has fixed visual size (default cube scale 1)
+            // Logic must match visual size for accurate judgement (Head/Tail calculation)
+            Length = 1.0f; 
+        }
+        else
+        {
+            // Long Note: Physical Length depends on Duration and Speed
+            float physicalLength = durationSeconds * speed;
+            Length = physicalLength;
+
             // Scale visuals for Long Note
             // Z Scale represents Physical Length on track
             Vector3 scale = transform.localScale;
