@@ -35,6 +35,12 @@
                     <ui:Label text="0.00" name="JudgementOffsetValueLabel" class="value-label" />
                 </ui:VisualElement>
 
+                <ui:VisualElement class="setting-row">
+                    <ui:Label text="Note Speed" class="setting-label" />
+                    <ui:Slider high-value="20" low-value="1" value="10" name="SpeedSlider" class="setting-slider" />
+                    <ui:Label text="10" name="SpeedValueLabel" class="value-label" />
+                </ui:VisualElement>
+
                 <ui:Button text="CLOSE" name="CloseSettingsButton" class="close-button" />
             </ui:VisualElement>
         </ui:VisualElement>

@@ -66,7 +66,18 @@ public class NoteSpawner : MonoBehaviour
         // Default 0 if not set
         int offsetMs = PlayerPrefs.GetInt("AudioOffset", 0);
         noteSpawnOffset = offsetMs / 1000.0f;
-        Debug.Log($"NoteSpawner: Loaded Audio Offset: {offsetMs}ms ({noteSpawnOffset}s)");
+        
+        // Load Note Speed
+        if (SongManager.Instance != null)
+        {
+            noteSpeed = SongManager.Instance.NoteSpeed;
+        }
+        else
+        {
+            noteSpeed = PlayerPrefs.GetFloat("NoteSpeed", 10f);
+        }
+
+        Debug.Log($"NoteSpawner: Loaded Audio Offset: {offsetMs}ms, Note Speed: {noteSpeed}");
 
         if (beatmapFile != null)
         {

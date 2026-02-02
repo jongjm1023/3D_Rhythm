@@ -203,6 +203,23 @@ public class GameManager : MonoBehaviour
             if (note.LaneIndex != laneIndex) continue;
             if (note.FloorIndex != currentFloor) continue;
 
+            // Zombie Note Check: Ignore notes that have already passed the "Bad" window
+            // They are technically "Missed" but not destroyed yet.
+            // HeadZ decreases as it moves. TargetZ is fixed (~0).
+            // If HeadZ < TargetZ - Window, it's irrelevant.
+            float hZ = note.transform.position.z - (note.Length * 0.5f);
+            float tZ = touchBar.transform.position.z + judgementOffset;
+            float rawDiff = hZ - tZ;
+            
+            // Bad Window = 1.4 * Multiplier.
+            float threshold = -1.4f * speedMultiplier;
+
+            if (rawDiff < threshold)
+            {
+                // Note is too far past the line. Ignore it.
+                continue;
+            }
+
             // User requested to judge based on smallest Z (furthest note)
             // Note moves +Z -> -Z. Smallest Z means it's the "oldest" note on screen.
             float noteZ = note.transform.position.z;
@@ -230,31 +247,34 @@ public class GameManager : MonoBehaviour
     private void JudgeHit(Note note, float distance, bool isTail)
     {
         // Accuracy windows
+        
         string judgement = "";
         int scoreAdd = 0;
 
-        if (distance <= 0.5f)
+        // Base Thresholds: Perfect=0.5, Great=0.8, Good=1.1, Bad=1.4 (at Speed 10)
+        // Scaled by speedMultiplier (Cached in Start)
+        if (distance <= 0.5f * speedMultiplier)
         {
             judgement = "PERFECT";
             scoreAdd = 500;
             Combo++;
             perfectCount++;
         }
-        else if (distance <= 0.8f)
+        else if (distance <= 0.8f * speedMultiplier)
         {
             judgement = "GREAT";
             scoreAdd = 300;
             Combo++;
             greatCount++;
         }
-        else if (distance <= 1.1f)
+        else if (distance <= 1.1f * speedMultiplier)
         {
             judgement = "GOOD";
             scoreAdd = 100;
             Combo++;
             goodCount++;
         }
-        else if (distance <= 1.4f)
+        else if (distance <= 1.4f * speedMultiplier)
         {
             judgement = "BAD";
             scoreAdd = 50;
@@ -391,7 +411,15 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private Button returnButton; // Drag Button here
 
+    public float GetTouchBarZ()
+    {
+        return touchBar != null ? touchBar.transform.position.z : 0f;
+    }
+
     // ... (existing code)
+
+    // Speed Multiplier
+    private float speedMultiplier = 1.0f;
 
     private void Start()
     {
@@ -400,7 +428,17 @@ public class GameManager : MonoBehaviour
             returnButton.onClick.AddListener(OnReturnToMenu);
             returnButton.gameObject.SetActive(false); // Hide initially
         }
+
+        // Cache Speed Multiplier
+        float currentSpeed = 10f;
+        if (SongManager.Instance != null) currentSpeed = SongManager.Instance.NoteSpeed;
+        else currentSpeed = PlayerPrefs.GetFloat("NoteSpeed", 10f);
+
+        speedMultiplier = currentSpeed / 10.0f;
+        Debug.Log($"GameManager: Speed Multiplier set to {speedMultiplier:F2} (Speed {currentSpeed})");
     }
+
+
 
     public void OnReturnToMenu()
     {

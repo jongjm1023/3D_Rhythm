@@ -31,6 +31,7 @@ public class SongManager : MonoBehaviour
     public List<SongData> songLibrary = new List<SongData>();
 
     public SongData SelectedSong { get; private set; }
+    public float NoteSpeed { get; set; } = 10f; // Global Speed Setting
 
     private void Awake()
     {
@@ -38,6 +39,10 @@ public class SongManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            
+            // Load Settings
+            NoteSpeed = PlayerPrefs.GetFloat("NoteSpeed", 10f);
+            
             LoadSongStats(); // Load on Startup
         }
         else

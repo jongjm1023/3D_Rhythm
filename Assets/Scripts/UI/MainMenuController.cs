@@ -8,11 +8,13 @@ public class MainMenuController : MonoBehaviour
     private VisualElement _settingsOverlay;
     private Label _offsetValueLabel;
     private Label _judgementOffsetValueLabel;
+    private Label _speedValueLabel; // New
 
     // PlayerPrefs Keys
     private const string PREF_VOLUME = "MasterVolume";
     private const string PREF_OFFSET = "AudioOffset";
     private const string PREF_JUDGEMENT_OFFSET = "JudgementOffset";
+    private const string PREF_NOTE_SPEED = "NoteSpeed"; // New
 
     private void OnEnable()
     {
@@ -40,6 +42,9 @@ public class MainMenuController : MonoBehaviour
         var judgementOffsetSlider = root.Q<Slider>("JudgementOffsetSlider");
         _judgementOffsetValueLabel = root.Q<Label>("JudgementOffsetValueLabel");
 
+        var speedSlider = root.Q<Slider>("SpeedSlider");
+        _speedValueLabel = root.Q<Label>("SpeedValueLabel");
+
         // Helper to safely register events
         if (startButton != null) startButton.clicked += OnStartClicked;
         if (settingsButton != null) settingsButton.clicked += OnSettingsClicked;
@@ -50,6 +55,7 @@ public class MainMenuController : MonoBehaviour
         float currentVolume = PlayerPrefs.GetFloat(PREF_VOLUME, 1.0f);
         int currentOffset = PlayerPrefs.GetInt(PREF_OFFSET, 0);
         float currentJudgementOffset = PlayerPrefs.GetFloat(PREF_JUDGEMENT_OFFSET, 0f);
+        float currentSpeed = PlayerPrefs.GetFloat(PREF_NOTE_SPEED, 10f); // Default 10
 
         if (volumeSlider != null)
         {
@@ -72,6 +78,13 @@ public class MainMenuController : MonoBehaviour
             judgementOffsetSlider.value = currentJudgementOffset;
             UpdateJudgementOffsetLabel(currentJudgementOffset);
             judgementOffsetSlider.RegisterValueChangedCallback(evt => OnJudgementOffsetChanged(evt.newValue));
+        }
+
+        if (speedSlider != null)
+        {
+            speedSlider.value = currentSpeed;
+            UpdateSpeedLabel(currentSpeed);
+            speedSlider.RegisterValueChangedCallback(evt => OnSpeedChanged(evt.newValue));
         }
     }
 
@@ -132,6 +145,19 @@ public class MainMenuController : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    private void OnSpeedChanged(float newValue)
+    {
+        UpdateSpeedLabel(newValue);
+        PlayerPrefs.SetFloat(PREF_NOTE_SPEED, newValue);
+        PlayerPrefs.Save();
+        
+        // Update SongManager if it exists
+        if (SongManager.Instance != null)
+        {
+            SongManager.Instance.NoteSpeed = newValue;
+        }
+    }
+
     private void UpdateOffsetLabel(int value)
     {
         if (_offsetValueLabel != null)
@@ -146,6 +172,14 @@ public class MainMenuController : MonoBehaviour
         {
             // F2 for 2 decimal places
             _judgementOffsetValueLabel.text = $"{value:F2}"; 
+        }
+    }
+
+    private void UpdateSpeedLabel(float value)
+    {
+        if (_speedValueLabel != null)
+        {
+            _speedValueLabel.text = $"{value:F1}"; // 1 decimal place
         }
     }
 }

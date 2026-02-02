@@ -7,10 +7,14 @@ public class Note : MonoBehaviour
     [SerializeField] private float destroyZ = -10f; // Position behind player to destroy note
     
     private GameObject bottomGlow;
+    private Light glowLight; // Cached reference
+
+    private Renderer noteRenderer;
 
     private void Start()
     {
         InitializeBottomGlow();
+        noteRenderer = GetComponent<Renderer>();
     }
 
     private void InitializeBottomGlow()
@@ -41,11 +45,73 @@ public class Note : MonoBehaviour
         // Move towards the player (assuming player is at Z=0 and notes spawn at positive Z)
         transform.Translate(Vector3.back * speed * Time.deltaTime);
 
+        // Visual Consumption for Long Notes
+        if (IsHolding && Type == NoteType.Long && GameManager.Instance != null)
+        {
+            // If we are already fully consumed (invisible), just update data but let it move
+            if (noteRenderer != null && !noteRenderer.enabled)
+            {
+                 // Ensure length stays 0
+                 Length = 0f;
+                 return; 
+            }
+
+            // Disable Bottom Glow (High Emission/Light) IMMEDIATELY during hold
+            if (bottomGlow != null && bottomGlow.activeSelf)
+            {
+                bottomGlow.SetActive(false);
+            }
+
+            float barZ = GameManager.Instance.GetTouchBarZ();
+            
+            // Calculate Current Physical Tail Z (based on current clamped state)
+            // Tail = Center + HalfScale
+            float halfScale = transform.localScale.z * 0.5f;
+            float currentHeadZ = transform.position.z - halfScale;
+            float currentTailZ = transform.position.z + halfScale;
+
+            // Check if Head is past bar
+            if (currentHeadZ < barZ)
+            {
+                // Logic: How much "Tail" is left above the bar?
+                // Visual Length = TailZ - BarZ
+                float newLength = currentTailZ - barZ;
+
+                if (newLength <= 0f)
+                {
+                    // Fully Consumed
+                    newLength = 0f;
+                    Length = 0f;
+                    
+                    // Hide Visuals
+                    if (noteRenderer != null) noteRenderer.enabled = false;
+                    if (bottomGlow != null) bottomGlow.SetActive(false);
+
+                    // Set Scale to 0 one last time? Or keep 0.
+                    transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, 0f);
+                    
+                    // DO NOT CLAMP POSITION. Let the zero-length note continue moving down in next frames.
+                    // This ensures the "Tail" (which is now just the point object) moves away from the bar,
+                    // allowing GameManager to judge 'late release'.
+                }
+                else
+                {
+                    // Update Visuals: Anchor Head to Bar
+                    float newZ = barZ + (newLength * 0.5f);
+
+                    transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, newLength);
+                    transform.position = new Vector3(transform.position.x, transform.position.y, newZ);
+                    Length = newLength; 
+                }
+            }
+        }
+
         if (transform.position.z < destroyZ)
         {
             // Missed the note
             Debug.Log("Missed Note!");
             GameManager.Instance.OnNoteMiss();
+            // Note: OnNoteMiss may modify activeNotes list.
             Destroy(gameObject);
         }
     }
@@ -64,18 +130,23 @@ public class Note : MonoBehaviour
     public int LaneIndex { get; private set; }
     public bool IsHit { get; set; } = false; // Prevent double hitting
 
-    public void Initialize(int floorIndex, int laneIndex, float moveSpeed, NoteType type = NoteType.Normal, float length = 1.0f)
+    public void Initialize(int floorIndex, int laneIndex, float moveSpeed, NoteType type = NoteType.Normal, float durationSeconds = 1.0f)
     {
         FloorIndex = floorIndex;
         LaneIndex = laneIndex;
         speed = moveSpeed;
         Type = type;
-        Length = length;
+        
+        // Calculate Physical Length (Z Units) based on Duration (Time) and Speed (Units/Time)
+        // Distance = Speed * Time
+        float physicalLength = durationSeconds * speed;
+        
+        Length = physicalLength;
 
         if (Type == NoteType.Long)
         {
             // Scale visuals for Long Note
-            // Assuming default scale Z is 1 and length 1 corresponds to 1 unit.
+            // Z Scale represents Physical Length on track
             Vector3 scale = transform.localScale;
             scale.z = Length;
             transform.localScale = scale;
@@ -108,7 +179,7 @@ public class Note : MonoBehaviour
             }
 
             // Add Real-time Light for effect
-            Light glowLight = bottomGlow.GetComponent<Light>();
+            if (glowLight == null) glowLight = bottomGlow.GetComponent<Light>();
             if (glowLight == null) glowLight = bottomGlow.AddComponent<Light>();
             
             // Light should use the glow color
