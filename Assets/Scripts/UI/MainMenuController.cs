@@ -179,7 +179,10 @@ public class MainMenuController : MonoBehaviour
     {
         if (_speedValueLabel != null)
         {
-            _speedValueLabel.text = $"{value:F1}"; // 1 decimal place
+            // Display as multiplier relative to base speed 10
+            // 10 -> x1.0, 20 -> x2.0, 1 -> x0.1
+            float multiplier = value / 10.0f;
+            _speedValueLabel.text = $"x{multiplier:F1}"; 
         }
     }
 }

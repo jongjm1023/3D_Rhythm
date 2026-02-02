@@ -37,7 +37,7 @@
 
                 <ui:VisualElement class="setting-row">
                     <ui:Label text="Note Speed" class="setting-label" />
-                    <ui:Slider high-value="20" low-value="1" value="10" name="SpeedSlider" class="setting-slider" />
+                    <ui:Slider high-value="50" low-value="1" value="10" name="SpeedSlider" class="setting-slider" />
                     <ui:Label text="10" name="SpeedValueLabel" class="value-label" />
                 </ui:VisualElement>
 
