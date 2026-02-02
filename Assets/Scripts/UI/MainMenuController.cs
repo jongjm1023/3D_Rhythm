@@ -88,6 +88,15 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        // Play Menu BGM
+        if (SongManager.Instance != null)
+        {
+            SongManager.Instance.PlayMenuMusic();
+        }
+    }
+
     private void OnStartClicked()
     {
         Debug.Log("Start Button Clicked. Loading 'Songs' scene...");

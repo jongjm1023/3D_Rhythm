@@ -33,6 +33,10 @@ public class SongManager : MonoBehaviour
     public SongData SelectedSong { get; private set; }
     public float NoteSpeed { get; set; } = 10f; // Global Speed Setting
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip menuBGM;
+    private AudioSource musicSource;
+
     private void Awake()
     {
         if (Instance == null)
@@ -40,6 +44,12 @@ public class SongManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             
+            // Setup AudioSource
+            musicSource = gameObject.GetComponent<AudioSource>();
+            if (musicSource == null) musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource.loop = true;
+            musicSource.playOnAwake = false;
+
             // Load Settings
             NoteSpeed = PlayerPrefs.GetFloat("NoteSpeed", 10f);
             
@@ -81,10 +91,38 @@ public class SongManager : MonoBehaviour
         Debug.Log($"Song Selected: {song.title} by {song.artist}");
     }
 
+    public void PlayMenuMusic()
+    {
+        if (menuBGM == null || musicSource == null) return;
+        if (musicSource.clip == menuBGM && musicSource.isPlaying) return;
+
+        musicSource.Stop();
+        musicSource.clip = menuBGM;
+        musicSource.loop = true;
+        musicSource.Play();
+    }
+
+    public void PlayPreview(AudioClip clip)
+    {
+        if (clip == null || musicSource == null) return;
+        if (musicSource.clip == clip && musicSource.isPlaying) return;
+
+        musicSource.Stop();
+        musicSource.clip = clip;
+        musicSource.loop = true;
+        musicSource.Play();
+    }
+
+    public void StopMusic()
+    {
+        if (musicSource != null) musicSource.Stop();
+    }
+
     public void PlayGame()
     {
         if (SelectedSong != null)
         {
+            StopMusic(); // Stop menu/preview music before gameplay
             UnityEngine.SceneManagement.SceneManager.LoadScene("SampleScene");
         }
         else

@@ -383,6 +383,70 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &1152740102
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1152740104}
+  - component: {fileID: 1152740103}
+  m_Layer: 0
+  m_Name: SongManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1152740103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152740102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc414655c8b48e54786986284897b2a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SongManager
+  songLibrary:
+  - title: Test1
+    artist: A
+    bpm: 100
+    level: 2
+    albumCover: {fileID: 2800000, guid: 766d15646e110714dbae026a5f056998, type: 3}
+    musicInfo: {fileID: 8300000, guid: 3f60308c65964e74daee53eabf50e264, type: 3}
+    beatmap: {fileID: 4900000, guid: 6412db9942981fb4891d828943aea10f, type: 3}
+    maxScore: 0
+    maxCombo: 0
+  - title: Test2
+    artist: A
+    bpm: 100
+    level: 2
+    albumCover: {fileID: 2800000, guid: 766d15646e110714dbae026a5f056998, type: 3}
+    musicInfo: {fileID: 8300000, guid: f17ecb7275aa8fd4c9d1813a0647d6c0, type: 3}
+    beatmap: {fileID: 4900000, guid: e4ae32bc1d6529b458dbf9a50dbf0131, type: 3}
+    maxScore: 0
+    maxCombo: 0
+  menuBGM: {fileID: 8300000, guid: f17ecb7275aa8fd4c9d1813a0647d6c0, type: 3}
+--- !u!4 &1152740104
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152740102}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 16.83328, y: 7.06884, z: 9.82931}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1901895739
 GameObject:
   m_ObjectHideFlags: 0
@@ -458,3 +522,4 @@ SceneRoots:
   - {fileID: 317398042}
   - {fileID: 497454608}
   - {fileID: 1901895742}
+  - {fileID: 1152740104}

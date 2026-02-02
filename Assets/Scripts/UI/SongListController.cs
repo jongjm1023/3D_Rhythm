@@ -17,6 +17,9 @@ public class SongListController : MonoBehaviour
 
         var root = uiDocument.rootVisualElement;
         
+        // Play Menu BGM by default when entering song list
+        if (SongManager.Instance != null) SongManager.Instance.PlayMenuMusic();
+
         // Panels
         var scrollView = root.Q<ScrollView>("SongList");
         var playButton = root.Q<Button>("PlayButton");
@@ -66,6 +69,12 @@ public class SongListController : MonoBehaviour
                 // Update Logic: Select Song but DO NOT load scene immediately
                 SongManager.Instance.SelectSong(song);
                 
+                // Play Preview
+                if (song.musicInfo != null)
+                {
+                    SongManager.Instance.PlayPreview(song.musicInfo);
+                }
+
                 // Update Detail Panel
                 if (detailTitle != null) detailTitle.text = song.title;
                 if (detailArtist != null) detailArtist.text = song.artist;
