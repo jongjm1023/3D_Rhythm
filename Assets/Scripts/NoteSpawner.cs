@@ -24,6 +24,8 @@ public class NoteSpawner : MonoBehaviour
     private int currentNoteIndex = 0;
     private bool isPlaying = false;
     private float mapStartTime;
+    private double dspStartTime;
+    private bool audioDeviceChanged = false;
 
     private BeatmapParser parser;
 
@@ -37,6 +39,8 @@ public class NoteSpawner : MonoBehaviour
 
     [Header("Color Settings")]
     [SerializeField] private FloorColorSettings[] floorSettings; // Assign 3 elements in Inspector
+
+
 
     private void Start()
     {
@@ -118,8 +122,13 @@ public class NoteSpawner : MonoBehaviour
         hitNotes.Sort((a, b) => a.time.CompareTo(b.time));
 
         isPlaying = true;
-        mapStartTime = Time.time;
-        Debug.Log("NoteSpawner: Game Started!");
+        
+        // Use DSP Time for precision (Audio Clock)
+        // Add 0.5s delay to allow audio system to prepare
+        dspStartTime = AudioSettings.dspTime + 0.5;
+        mapStartTime = (float)dspStartTime; // For debug
+        
+        Debug.Log($"NoteSpawner: Game Starting at DSP {dspStartTime}");
         
         if (audioSource != null)
         {
@@ -146,10 +155,31 @@ public class NoteSpawner : MonoBehaviour
             
             audioSource.enabled = true; // Ensure component is enabled
             audioSource.mute = false;   // Ensure not muted
-            audioSource.Play();
             
-            Debug.Log($"[{gameObject.name}:{gameObject.GetInstanceID()}] NoteSpawner: Playing... IsPlaying: {audioSource.isPlaying}, Time: {audioSource.time}");
+            // Critical: PlayScheduled ensures synchronization
+            audioSource.PlayScheduled(dspStartTime);
+            
+            Debug.Log($"[{gameObject.name}:{gameObject.GetInstanceID()}] NoteSpawner: Scheduled Play at {dspStartTime}");
             Debug.Log($"AudioListener Info - Pause: {AudioListener.pause}, Volume: {AudioListener.volume}");
+        }
+    }
+
+    private void OnEnable()
+    {
+        AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
+    }
+
+    private void OnDisable()
+    {
+        AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
+    }
+
+    private void OnAudioConfigurationChanged(bool deviceWasChanged)
+    {
+        if (deviceWasChanged)
+        {
+            audioDeviceChanged = true;
+            Debug.Log("NoteSpawner: Audio Device Change Detected!");
         }
     }
 
@@ -157,6 +187,20 @@ public class NoteSpawner : MonoBehaviour
 
     private void Update()
     {
+        if (audioDeviceChanged)
+        {
+            audioDeviceChanged = false;
+            if (audioSource != null && isPlaying)
+            {
+                // Restart playback to adapt to new device (sometimes required)
+                float time = audioSource.time;
+                audioSource.Stop();
+                audioSource.Play();
+                audioSource.time = time;
+                Debug.Log($"NoteSpawner: Restored Audio Playback at {time}s due to Device Change");
+            }
+        }
+
         if (!isPlaying) return;
 
         // Skip to First Note Debug
@@ -166,11 +210,9 @@ public class NoteSpawner : MonoBehaviour
             SkipToFirstNote();
         }
 
-        // Current Song Time
-        // If AudioSource is playing, use its time for exact sync. Otherwise use Time.time offset.
-        float songTime = (audioSource != null && audioSource.isPlaying) 
-            ? audioSource.time 
-            : (Time.time - mapStartTime);
+        // Precise Song Time using DSP Clock
+        // This is decoupled from Frame Rate and Main Thread Jitter.
+        float songTime = (float)(AudioSettings.dspTime - dspStartTime);
 
         // Look-ahead for spawning
         // Note needs to spawn 'noteApproachTime' seconds BEFORE the hit time.
@@ -247,16 +289,32 @@ public class NoteSpawner : MonoBehaviour
 
         Debug.Log($"NoteSpawner: Skipping from {currentSongTime:F2}s to {targetTime:F2}s (First Spawn: {firstSpawnTime:F2}s)");
 
-        // Apply Skip
+        // Apply Skip with Precision
         if (audioSource != null)
         {
+            audioSource.Stop(); // Stop to prepare fresh schedule
             audioSource.time = targetTime;
+            
+            // Schedule resume slightly in future to allow buffering/sync
+            double resumeDSP = AudioSettings.dspTime + 0.05; // 50ms buffer
+            audioSource.PlayScheduled(resumeDSP);
+            
+            // Re-align DSP Reference
+            // SongTime at resumeDSP will be 'targetTime'
+            // SongTime = CurrentDSP - dspStartTime
+            // targetTime = resumeDSP - dspStartTime
+            // dspStartTime = resumeDSP - targetTime
+            dspStartTime = resumeDSP - targetTime;
+             
+            Debug.Log($"NoteSpawner: Skipped to {targetTime:F2}s, Resuming at DSP {resumeDSP:F4}");
+        }
+        else
+        {
+             // Fallback if no audio source
+             dspStartTime = AudioSettings.dspTime - targetTime;
         }
         
-        // Update Internal Timer Reference
-        // current Time.time should represent targetTime
-        // mapStartTime = Time.time - targetTime
-        mapStartTime = Time.time - targetTime;
+        mapStartTime = (float)dspStartTime;
     }
 
     private void SpawnSpecificNote(MapData.HitInfo data)

@@ -23,8 +23,8 @@
 
                 <ui:VisualElement class="setting-row">
                     <ui:Label text="Audio Offset (ms)" class="setting-label" />
-                    <!-- Using SliderInt for offset -200ms to +200ms -->
-                    <ui:SliderInt high-value="200" low-value="-200" value="0" name="OffsetSlider" class="setting-slider" />
+                    <!-- Using SliderInt for offset -1000ms to +1000ms -->
+                    <ui:SliderInt high-value="1000" low-value="-1000" value="0" name="OffsetSlider" class="setting-slider" />
                     <ui:Label text="0 ms" name="OffsetValueLabel" class="value-label" />
                 </ui:VisualElement>
 
