@@ -1,0 +1,27 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project:/Assets/UI/GameplayUI.uss" />
+    <ui:VisualElement name="GameplayRoot" class="gameplay-root">
+        <!-- Score & Combo on the Left -->
+        <ui:VisualElement name="LeftContent" class="left-content">
+            <ui:VisualElement name="ScoreContainer" class="score-container glass-panel">
+                <ui:Label text="SCORE" name="ScoreLabel" class="label-tiny" />
+                <ui:Label text="00000000" name="ScoreValue" class="score-value" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="ComboContainer" class="combo-container">
+                <ui:Label text="0" name="ComboValue" class="combo-value" />
+                <ui:Label text="COMBO" name="ComboLabel" class="combo-label" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Judgment stays Centered -->
+        <ui:VisualElement name="JudgmentContainer" class="judgment-container centered-judgment">
+            <ui:Label text="" name="JudgmentValue" class="judgment-value" />
+        </ui:VisualElement>
+        
+        <!-- Bottom Section -->
+        <ui:VisualElement name="BottomSection" class="bottom-section">
+             <!-- Future Progress Bar could go here -->
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

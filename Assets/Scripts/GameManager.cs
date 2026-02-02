@@ -11,9 +11,15 @@ public class GameManager : MonoBehaviour
 
     [Header("Rhythm Settings")]
     [SerializeField] private TouchBar touchBar;
-    [SerializeField] private TMP_Text judgementText; // Supports TextMeshPro
-    [SerializeField] private TMP_Text comboText; // UI for Combo
-    [SerializeField] private TMP_Text scoreText; // UI for Score
+    
+    [Header("UI Toolkit (New)")]
+    [SerializeField] private GameplayUIController gameplayUI;
+
+    [Header("Legacy UI (Deprecated)")]
+    [SerializeField] private TMP_Text judgementText; 
+    [SerializeField] private TMP_Text comboText; 
+    [SerializeField] private TMP_Text scoreText; 
+
     [Tooltip("Adjust hit timing. Positive: Late Hit (Closer to Player), Negative: Early Hit (Further)")]
     [SerializeField] private float judgementOffset = 0f;
     [Header("Result UI")]
@@ -53,6 +59,13 @@ public class GameManager : MonoBehaviour
             // Load Judgement Offset
             judgementOffset = PlayerPrefs.GetFloat("JudgementOffset", 0f);
             Debug.Log($"GameManager: Loaded Judgement Offset: {judgementOffset}");
+
+            // Auto-discover Gameplay UI if not assigned
+            if (gameplayUI == null)
+            {
+                gameplayUI = FindObjectOfType<GameplayUIController>();
+                if (gameplayUI != null) Debug.Log("GameManager: Auto-connected GameplayUIController.");
+            }
         }
         else
         {
@@ -381,6 +394,13 @@ public class GameManager : MonoBehaviour
 
     private void ShowJudgementUI(string text)
     {
+        // New UI
+        if (gameplayUI != null)
+        {
+            gameplayUI.ShowJudgment(text);
+        }
+
+        // Legacy Fallback
         if (judgementText != null)
         {
             judgementText.text = text;
@@ -396,17 +416,31 @@ public class GameManager : MonoBehaviour
 
     private void UpdateComboUI()
     {
+        // New UI
+        if (gameplayUI != null)
+        {
+            gameplayUI.UpdateCombo(Combo);
+        }
+
+        // Legacy Fallback
         if (comboText != null)
         {
             if (Combo > 0)
                 comboText.text = $"COMBO {Combo}";
             else
-                comboText.text = ""; // Hide if 0
+                comboText.text = ""; 
         }
     }
 
     private void UpdateScoreUI()
     {
+        // New UI
+        if (gameplayUI != null)
+        {
+            gameplayUI.UpdateScore(Score);
+        }
+
+        // Legacy Fallback
         if (scoreText != null)
         {
             scoreText.text = $"SCORE: {Score}";
@@ -458,6 +492,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("Game Over!");
         
         // Hide In-Game UI
+        if (gameplayUI != null) gameplayUI.gameObject.SetActive(false);
         if (scoreText != null) scoreText.gameObject.SetActive(false);
         if (comboText != null) comboText.gameObject.SetActive(false);
         if (judgementText != null) judgementText.gameObject.SetActive(false);

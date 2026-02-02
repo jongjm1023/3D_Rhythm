@@ -1,0 +1,97 @@
+/* Gameplay UI Style */
+
+.gameplay-root {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    padding: 60px;
+    align-items: stretch; /* Stretch to allow left/right alignment */
+    justify-content: flex-start;
+    color: white;
+}
+
+/* Left Content Column */
+.left-content {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+/* Glassmorphism Panel Base */
+.glass-panel {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    border-width: 1px;
+    border-radius: 20px;
+    padding: 10px 20px;
+}
+
+/* Score Section */
+.score-container {
+    align-items: flex-start;
+    min-width: 200px;
+    margin-bottom: 40px;
+}
+
+.label-tiny {
+    font-size: 14px;
+    opacity: 0.6;
+    letter-spacing: 2px;
+}
+
+.score-value {
+    font-size: 32px;
+    -unity-font-style: bold;
+    color: #00ffff; /* Cyan glow color */
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* Combo Section (Left side) */
+.combo-container {
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.combo-value {
+    font-size: 80px;
+    -unity-font-style: bold;
+    color: #ff0096; /* Hot Pink */
+    text-shadow: 0 0 20px rgba(255, 0, 150, 0.8);
+}
+
+.combo-label {
+    font-size: 20px;
+    letter-spacing: 5px;
+    opacity: 0.8;
+}
+
+/* Judgment Section (Centered) */
+.centered-judgment {
+    position: absolute;
+    top: 45%; /* Slightly above dead center for better visibility */
+    left: 0;
+    right: 0;
+    height: 100px;
+    justify-content: center;
+    align-items: center;
+}
+
+.judgment-value {
+    font-size: 48px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    letter-spacing: 4px;
+}
+
+/* Judgment Colors */
+.perfect { color: #00ffff; text-shadow: 0 0 15px rgba(0, 255, 255, 1); }
+.great { color: #ffff00; text-shadow: 0 0 15px rgba(255, 255, 0, 0.8); }
+.good { color: #00ff00; text-shadow: 0 0 15px rgba(0, 255, 0, 0.6); }
+.bad { color: #ff8800; text-shadow: 0 0 15px rgba(255, 136, 0, 0.6); }
+.miss { color: #ff0000; text-shadow: 0 0 15px rgba(255, 0, 0, 0.6); }
+
+/* Bottom Section */
+.bottom-section {
+    width: 100%;
+    height: 100px;
+}
