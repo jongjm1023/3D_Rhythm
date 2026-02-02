@@ -23,7 +23,6 @@ public class NoteSpawner : MonoBehaviour
     private List<MapData.HitInfo> hitNotes = new List<MapData.HitInfo>();
     private int currentNoteIndex = 0;
     private bool isPlaying = false;
-    private float mapStartTime;
     private double dspStartTime;
     private bool audioDeviceChanged = false;
 
@@ -126,7 +125,6 @@ public class NoteSpawner : MonoBehaviour
         // Use DSP Time for precision (Audio Clock)
         // Add 0.5s delay to allow audio system to prepare
         dspStartTime = AudioSettings.dspTime + 0.5;
-        mapStartTime = (float)dspStartTime; // For debug
         
         Debug.Log($"NoteSpawner: Game Starting at DSP {dspStartTime}");
         
@@ -203,13 +201,6 @@ public class NoteSpawner : MonoBehaviour
 
         if (!isPlaying) return;
 
-        // Skip to First Note Debug
-        if (UnityEngine.InputSystem.Keyboard.current != null && 
-            UnityEngine.InputSystem.Keyboard.current.wKey.wasPressedThisFrame)
-        {
-            SkipToFirstNote();
-        }
-
         // Precise Song Time using DSP Clock
         // This is decoupled from Frame Rate and Main Thread Jitter.
         float songTime = (float)(AudioSettings.dspTime - dspStartTime);
@@ -227,7 +218,7 @@ public class NoteSpawner : MonoBehaviour
 
             if (songTime >= spawnTime)
             {
-                SpawnSpecificNote(noteData);
+                SpawnSpecificNote(noteData, songTime);
                 currentNoteIndex++;
             }
             else
@@ -262,91 +253,42 @@ public class NoteSpawner : MonoBehaviour
         }
     }
 
-    private void SkipToFirstNote()
-    {
-        if (hitNotes.Count == 0) return;
 
-        // Calculate Target Time
-        // We want to be 2.0 seconds BEFORE the first note spawns
-        MapData.HitInfo firstNote = hitNotes[0];
-        
-        float approachTime = spawnZ / noteSpeed; 
-        float firstSpawnTime = (firstNote.time + noteSpawnOffset) - approachTime;
-        
-        // Target: 2.0s before spawn
-        float targetTime = firstSpawnTime - 2.0f;
-        
-        // Clamp to 0
-        if (targetTime < 0) targetTime = 0f;
-
-        // Don't skip if we are already past that time
-        float currentSongTime = (audioSource != null && audioSource.isPlaying) ? audioSource.time : (Time.time - mapStartTime);
-        if (currentSongTime >= targetTime) 
-        {
-            Debug.Log("NoteSpawner: Already past skip target time.");
-            return;
-        }
-
-        Debug.Log($"NoteSpawner: Skipping from {currentSongTime:F2}s to {targetTime:F2}s (First Spawn: {firstSpawnTime:F2}s)");
-
-        // Apply Skip with Precision
-        if (audioSource != null)
-        {
-            audioSource.Stop(); // Stop to prepare fresh schedule
-            audioSource.time = targetTime;
-            
-            // Schedule resume slightly in future to allow buffering/sync
-            double resumeDSP = AudioSettings.dspTime + 0.05; // 50ms buffer
-            audioSource.PlayScheduled(resumeDSP);
-            
-            // Re-align DSP Reference
-            // SongTime at resumeDSP will be 'targetTime'
-            // SongTime = CurrentDSP - dspStartTime
-            // targetTime = resumeDSP - dspStartTime
-            // dspStartTime = resumeDSP - targetTime
-            dspStartTime = resumeDSP - targetTime;
-             
-            Debug.Log($"NoteSpawner: Skipped to {targetTime:F2}s, Resuming at DSP {resumeDSP:F4}");
-        }
-        else
-        {
-             // Fallback if no audio source
-             dspStartTime = AudioSettings.dspTime - targetTime;
-        }
-        
-        mapStartTime = (float)dspStartTime;
-    }
-
-    private void SpawnSpecificNote(MapData.HitInfo data)
+    private void SpawnSpecificNote(MapData.HitInfo data, float currentSongTime)
     {
         if (notePrefab == null) return;
 
-        // Lane X Mapping (0,1,2,3)
-        // xPositions array matches 0,1,2,3?
-        // xPositions = { -3.75f, -1.25f, 1.25f, 3.75f }
+        // 1. Calculate the intended Spawn Time
+        float approachTime = spawnZ / noteSpeed; 
+        float spawnTime = (data.time + noteSpawnOffset) - approachTime;
+
+        // 2. Physics Correction (Catch-up)
+        // If we spawn late (e.g. during warmup or after skip), calculate travel distance already covered.
+        float timeDiff = currentSongTime - spawnTime;
+        float travelAlreadyDone = timeDiff * noteSpeed;
+
+        // 3. Lane X Mapping
         float targetX = 0f;
         if (data.lane >= 0 && data.lane < xPositions.Length)
             targetX = xPositions[data.lane];
 
-        // Floor Y Mapping (0,1,2)
-        // yPositions = { 1.75f, 4.25f, 6.75f }
-        // MapData: 0=1F, 1=2F, 2=3F
+        // 4. Floor Y Mapping
         float targetY = 0f;
         if (data.floor >= 0 && data.floor < yPositions.Length)
             targetY = yPositions[data.floor];
 
-        // Match Visual Head to Timing
-        // Visual Head is at (Pos - Length/2).
-        // Standard logic puts Pos at Target at Time. Thus Head is Early.
-        // Offset Z by +Length/2 adds travel distance, delaying it to sync Head with Time.
         float effectiveLength = (data.type == Note.NoteType.Normal) ? 1.0f : data.length;
-        
-        // CORRECTION: For Curved Notes, Transform is at Zero (Head). No Offset Needed.
-        // For Straight Notes, Transform is at Center. Offset Needed.
         bool isCurved = (data.curvePoints != null && data.curvePoints.Count > 1);
         float zOffset = isCurved ? 0f : (effectiveLength * 0.5f);
 
-        Vector3 spawnPos = new Vector3(targetX, targetY, spawnZ + zOffset);
+        // Initial Z = (SpawnZ + zOffset) - travelAlreadyDone
+        float actualZ = (spawnZ + zOffset) - travelAlreadyDone;
+
+        // Failsafe: Don't spawn if already past destruction Z
+        const float HARD_DESTROY_Z = -80f; 
+        if (actualZ + effectiveLength < HARD_DESTROY_Z) return;
+
+        Vector3 spawnPos = new Vector3(targetX, targetY, actualZ);
 
         GameObject noteObj = Instantiate(notePrefab, spawnPos, Quaternion.identity);
         Note noteScript = noteObj.GetComponent<Note>();

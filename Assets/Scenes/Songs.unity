@@ -458,7 +458,7 @@ MonoBehaviour:
     level: 2
     albumCover: {fileID: 2800000, guid: 766d15646e110714dbae026a5f056998, type: 3}
     musicInfo: {fileID: 8300000, guid: 3f60308c65964e74daee53eabf50e264, type: 3}
-    beatmap: {fileID: 4900000, guid: 41c7c5e39c14312498f287b9819c6798, type: 3}
+    beatmap: {fileID: 4900000, guid: ee34c8db11f8c8e4fbfb9ea3c2ced93d, type: 3}
     maxScore: 0
     maxCombo: 0
   - title: Test2
