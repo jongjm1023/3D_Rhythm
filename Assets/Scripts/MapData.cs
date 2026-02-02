@@ -7,5 +7,6 @@ public class MapData
         public int floor;        // 0 (1F), 1 (2F), 2 (3F)
         public Note.NoteType type;
         public float length;     // Duration/Length for Long Notes
+        public System.Collections.Generic.List<UnityEngine.Vector2Int> curvePoints; // X=Lane, Y=Floor
     }
 }

@@ -200,11 +200,15 @@ public class NoteSpawner : MonoBehaviour
         if (hitNotes.Count > 0 && currentNoteIndex >= hitNotes.Count)
         {
             // All notes spawned.
-            // Check if audio has finished or songTime is past last note
-            float lastNoteTime = hitNotes[hitNotes.Count - 1].time;
             
-            // Allow buffer for last note to be hit/missed (e.g. +3s)
-            if (songTime > lastNoteTime + 3.0f)
+            // Wait for all active notes to be destroyed/hit
+            bool allNotesCleared = !GameManager.Instance.HasActiveNotes;
+            
+            // Failsafe: If notes are stuck for too long (e.g. 10s past last note), force end
+            float lastNoteTime = hitNotes[hitNotes.Count - 1].time;
+            bool timeOut = songTime > lastNoteTime + 20.0f;
+
+            if (allNotesCleared || timeOut)
             {
                 // Trigger End Game (One-shot check)
                 if (isPlaying)
@@ -273,7 +277,18 @@ public class NoteSpawner : MonoBehaviour
         if (data.floor >= 0 && data.floor < yPositions.Length)
             targetY = yPositions[data.floor];
 
-        Vector3 spawnPos = new Vector3(targetX, targetY, spawnZ);
+        // Match Visual Head to Timing
+        // Visual Head is at (Pos - Length/2).
+        // Standard logic puts Pos at Target at Time. Thus Head is Early.
+        // Offset Z by +Length/2 adds travel distance, delaying it to sync Head with Time.
+        float effectiveLength = (data.type == Note.NoteType.Normal) ? 1.0f : data.length;
+        
+        // CORRECTION: For Curved Notes, Transform is at Zero (Head). No Offset Needed.
+        // For Straight Notes, Transform is at Center. Offset Needed.
+        bool isCurved = (data.curvePoints != null && data.curvePoints.Count > 1);
+        float zOffset = isCurved ? 0f : (effectiveLength * 0.5f);
+
+        Vector3 spawnPos = new Vector3(targetX, targetY, spawnZ + zOffset);
 
         GameObject noteObj = Instantiate(notePrefab, spawnPos, Quaternion.identity);
         Note noteScript = noteObj.GetComponent<Note>();
@@ -304,7 +319,7 @@ public class NoteSpawner : MonoBehaviour
             noteScript.SetColor(noteColor, glowColor);
 
             // Initialize Data and Register
-            noteScript.Initialize(data.floor, data.lane, noteSpeed, data.type, data.length);
+            noteScript.Initialize(data.floor, data.lane, noteSpeed, data.type, data.length, data.curvePoints);
             GameManager.Instance.RegisterNote(noteScript);
         }
     }

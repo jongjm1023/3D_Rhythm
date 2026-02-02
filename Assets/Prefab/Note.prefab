@@ -125,4 +125,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Note
   speed: 10
-  destroyZ: -10
+  destroyZ: -15

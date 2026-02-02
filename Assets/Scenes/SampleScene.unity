@@ -3474,7 +3474,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NoteSpawner
   notePrefab: {fileID: 2642044593709188552, guid: 05819ae936aaabb45a340c191594e1e9, type: 3}
-  beatmapFile: {fileID: 4900000, guid: 41c7c5e39c14312498f287b9819c6798, type: 3}
+  beatmapFile: {fileID: 4900000, guid: e4ae32bc1d6529b458dbf9a50dbf0131, type: 3}
   musicClip: {fileID: 8300000, guid: 3f60308c65964e74daee53eabf50e264, type: 3}
   audioSource: {fileID: 1784803443}
   noteApproachTime: 2

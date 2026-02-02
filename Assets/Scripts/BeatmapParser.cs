@@ -108,9 +108,46 @@ public class BeatmapParser : MonoBehaviour
                 if (isSlider)
                 {
                     hit.type = Note.NoteType.Long;
+                    hit.curvePoints = new System.Collections.Generic.List<Vector2Int>();
                     
+                    // Parse Curve Points
                     // Format: x,y,time,type,hitSound,curvePoints,slides,pixelLength,...
                     // Index:  0 1 2    3    4        5           6      7
+                    if (parts.Length >= 6)
+                    {
+                        string[] curveParts = parts[5].Split('|');
+                        // First part implies type (e.g. B), others are x:y
+                        // Start from 1? Actually formatting is "Type|x:y|x:y..."
+                        
+                        // Add Start Point First (Lane/Floor already parsed)
+                        hit.curvePoints.Add(new Vector2Int(hit.lane, hit.floor));
+
+                        for (int i = 1; i < curveParts.Length; i++)
+                        {
+                            string[] xy = curveParts[i].Split(':');
+                            if (xy.Length == 2)
+                            {
+                                if (int.TryParse(xy[0], out int cx) && int.TryParse(xy[1], out int cy))
+                                {
+                                    // Map to Game Coords
+                                    int cLane = Mathf.Clamp(cx / 128, 0, 3);
+                                    int cFloor = 0;
+                                    if (cy < 128) cFloor = 2;
+                                    else if (cy < 256) cFloor = 1;
+                                    else cFloor = 0;
+                                    
+                                    // Add only if different from last to avoid dupes/noise
+                                    Vector2Int last = hit.curvePoints[hit.curvePoints.Count - 1];
+                                    if (last.x != cLane || last.y != cFloor)
+                                    {
+                                        hit.curvePoints.Add(new Vector2Int(cLane, cFloor));
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Format: ...slides,pixelLength
                     if (parts.Length >= 8)
                     {
                         // Parse Repeats (Slides)

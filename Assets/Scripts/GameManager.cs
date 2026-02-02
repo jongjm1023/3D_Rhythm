@@ -101,6 +101,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public bool HasActiveNotes => activeNotes.Count > 0;
+
     public void OnNoteMiss()
     {
         Debug.Log("Note Missed (Pass)");
@@ -161,7 +163,8 @@ public class GameManager : MonoBehaviour
 
                 // Tail = Center + ScaleZ/2. (Tail is at larger Z, arrives later).
                 
-                float tailZ = note.transform.position.z + (note.Length * 0.5f);
+                // Tail Position using unified property
+                float tailZ = note.TailZ;
                 float barZ = touchBar.transform.position.z;
                 
                 // Calculate distance relative to Adjusted Hit Line
@@ -207,7 +210,7 @@ public class GameManager : MonoBehaviour
             // They are technically "Missed" but not destroyed yet.
             // HeadZ decreases as it moves. TargetZ is fixed (~0).
             // If HeadZ < TargetZ - Window, it's irrelevant.
-            float hZ = note.transform.position.z - (note.Length * 0.5f);
+            float hZ = note.HeadZ;
             float tZ = touchBar.transform.position.z + judgementOffset;
             float rawDiff = hZ - tZ;
             
@@ -222,7 +225,8 @@ public class GameManager : MonoBehaviour
 
             // User requested to judge based on smallest Z (furthest note)
             // Note moves +Z -> -Z. Smallest Z means it's the "oldest" note on screen.
-            float noteZ = note.transform.position.z;
+            // MUST use HeadZ to be consistent across Straight (Center-based) and Curved (Head-based) notes.
+            float noteZ = note.HeadZ;
             
             if (noteZ < minZ)
             {
@@ -234,7 +238,7 @@ public class GameManager : MonoBehaviour
         if (closestNote != null)
         {
             // Now calculate key distance for judgement on this specific note
-            float headZ = closestNote.transform.position.z - (closestNote.Length * 0.5f);
+            float headZ = closestNote.HeadZ;
             float barZ = touchBar.transform.position.z;
             
             float targetZ = barZ + judgementOffset;
@@ -420,6 +424,9 @@ public class GameManager : MonoBehaviour
 
     // Speed Multiplier
     private float speedMultiplier = 1.0f;
+    
+    // Threshold for "Early Miss" (Past the Bad Window)
+    public float BadThreshold => -1.4f * (speedMultiplier > 0 ? speedMultiplier : 1.0f);
 
     private void Start()
     {

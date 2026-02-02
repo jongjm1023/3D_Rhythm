@@ -4,7 +4,7 @@ public class Note : MonoBehaviour
 {
     [Header("Settings")]
     [SerializeField] private float speed = 10f;
-    [SerializeField] private float destroyZ = -10f; // Position behind player to destroy note
+    [SerializeField] private float destroyZ = -80f; // Position behind player to destroy note
     
     private GameObject bottomGlow;
     private Light glowLight; // Cached reference
@@ -40,10 +40,26 @@ public class Note : MonoBehaviour
         bottomGlow.transform.localScale = new Vector3(1.0f, 0.15f, 1.0f); 
     }
 
+    private bool isCurved = false;
+    private bool hasMissed = false;
+
     private void Update()
     {
         // Move towards the player (assuming player is at Z=0 and notes spawn at positive Z)
         transform.Translate(Vector3.back * speed * Time.deltaTime);
+
+        if (GameManager.Instance != null && !IsHit && !hasMissed && !IsHolding)
+        {
+            // Early Miss Check: Has the HEAD passed the Bad Threshold?
+            float limit = GameManager.Instance.GetTouchBarZ() + GameManager.Instance.BadThreshold;
+            if (HeadZ < limit)
+            {
+                 Debug.Log("Early Miss Triggered!");
+                 GameManager.Instance.OnNoteMiss();
+                 GameManager.Instance.UnregisterNote(this);
+                 hasMissed = true;
+            }
+        }
 
         // Visual Consumption for Long Notes
         if (IsHolding && Type == NoteType.Long && GameManager.Instance != null)
@@ -51,8 +67,7 @@ public class Note : MonoBehaviour
             // If we are already fully consumed (invisible), just update data but let it move
             if (noteRenderer != null && !noteRenderer.enabled)
             {
-                 // Ensure length stays 0
-                 Length = 0f;
+                 if (!isCurved) Length = 0f;
                  return; 
             }
 
@@ -60,6 +75,14 @@ public class Note : MonoBehaviour
             if (bottomGlow != null && bottomGlow.activeSelf)
             {
                 bottomGlow.SetActive(false);
+            }
+
+            // If Curved, we do NOT shrink visually (Too complex for LineRenderer clip).
+            // We just let it slide through the bar.
+            // Logic relies on constant Length and moving Position to determine Tail Z.
+            if (isCurved)
+            {
+                return;
             }
 
             float barZ = GameManager.Instance.GetTouchBarZ();
@@ -75,6 +98,7 @@ public class Note : MonoBehaviour
             {
                 // Logic: How much "Tail" is left above the bar?
                 // Visual Length = TailZ - BarZ
+                // ... (Same logic for straight notes)
                 float newLength = currentTailZ - barZ;
 
                 if (newLength <= 0f)
@@ -91,8 +115,6 @@ public class Note : MonoBehaviour
                     transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, 0f);
                     
                     // DO NOT CLAMP POSITION. Let the zero-length note continue moving down in next frames.
-                    // This ensures the "Tail" (which is now just the point object) moves away from the bar,
-                    // allowing GameManager to judge 'late release'.
                 }
                 else
                 {
@@ -106,12 +128,22 @@ public class Note : MonoBehaviour
             }
         }
 
-        if (transform.position.z < destroyZ)
+        // Check for destruction (Miss)
+        // User requested to judge based on TAIL position.
+        // TailZ is now unified via property
+        float tailZ = TailZ;
+        
+        if (tailZ < destroyZ)
         {
-            // Missed the note
-            Debug.Log("Missed Note!");
-            GameManager.Instance.OnNoteMiss();
-            // Note: OnNoteMiss may modify activeNotes list.
+            // Fully off-screen. Destroy.
+            // Only trigger miss if it wasn't already triggered (Early Miss) or Hit.
+            if (!IsHit && !hasMissed)
+            {
+                Debug.Log("Missed Note (Destruction Fallback)!");
+                GameManager.Instance.OnNoteMiss();
+                GameManager.Instance.UnregisterNote(this);
+            }
+            
             Destroy(gameObject);
         }
     }
@@ -130,7 +162,7 @@ public class Note : MonoBehaviour
     public int LaneIndex { get; private set; }
     public bool IsHit { get; set; } = false; // Prevent double hitting
 
-    public void Initialize(int floorIndex, int laneIndex, float moveSpeed, NoteType type = NoteType.Normal, float durationSeconds = 1.0f)
+    public void Initialize(int floorIndex, int laneIndex, float moveSpeed, NoteType type = NoteType.Normal, float durationSeconds = 1.0f, System.Collections.Generic.List<Vector2Int> curvePoints = null)
     {
         FloorIndex = floorIndex;
         LaneIndex = laneIndex;
@@ -139,8 +171,6 @@ public class Note : MonoBehaviour
         
         if (Type == NoteType.Normal)
         {
-            // Normal Note has fixed visual size (default cube scale 1)
-            // Logic must match visual size for accurate judgement (Head/Tail calculation)
             Length = 1.0f; 
         }
         else
@@ -149,11 +179,78 @@ public class Note : MonoBehaviour
             float physicalLength = durationSeconds * speed;
             Length = physicalLength;
 
-            // Scale visuals for Long Note
-            // Z Scale represents Physical Length on track
-            Vector3 scale = transform.localScale;
-            scale.z = Length;
-            transform.localScale = scale;
+            // Check if we have curve data (Flexible Slider) with actual movement (at least 2 points)
+            if (curvePoints != null && curvePoints.Count > 1)
+            {
+                isCurved = true;
+                Debug.Log($"[Curved Slider] Initialized. Length: {Length:F2}, Points: {curvePoints.Count}");
+
+                // -- CURVED SLIDER LOGIC --
+                
+                // 1. Hide default visuals
+                if (GetComponent<Renderer>()) GetComponent<Renderer>().enabled = false;
+                if (bottomGlow != null) bottomGlow.SetActive(false); // Disable glow for curve (or handle custom glow later)
+
+                // 2. Setup LineRenderer
+                LineRenderer lr = GetComponent<LineRenderer>();
+                if (lr == null) lr = gameObject.AddComponent<LineRenderer>();
+                
+                lr.useWorldSpace = false; // Move with parent
+                
+                // Match width to the Note's physical width (X scale)
+                float noteWidth = transform.localScale.x;
+                lr.startWidth = noteWidth;
+                lr.endWidth = noteWidth;
+                
+                // Use the same material as the Note Mesh to ensure visibility and matching style (Glow/Color)
+                if (GetComponent<Renderer>() != null)
+                {
+                    lr.material = GetComponent<Renderer>().material;
+                }
+                else
+                {
+                    // Fallback if no renderer (unlikely)
+                    lr.material = new Material(Shader.Find("Standard")); 
+                }
+                
+                // Material already has color. Set Vertex Color to White to avoid multiplying tint.
+                lr.startColor = Color.white;
+                lr.endColor = Color.white;
+
+                // 3. Generate Points
+                int count = curvePoints.Count;
+                lr.positionCount = count;
+                
+                float spacingX = 2.5f;
+                float spacingY = 2.75f;
+                
+                for (int i = 0; i < count; i++)
+                {
+                    Vector2Int p = curvePoints[i];
+                    
+                    // X/Y Offset relative to Head
+                    float offX = (p.x - LaneIndex) * spacingX;
+                    float offY = (p.y - FloorIndex) * spacingY;
+                    
+                    // Z Position: Interpolate from 0 (Head) to Length (Tail)
+                    // Assuming points are uniformly distributed in time/Z
+                    float t = (float)i / (count - 1);
+                    float offZ = t * Length; // Positive Z extends upwards/backwards relative to movement direction?
+                    // Note moves -Z. Head is at 0. Tail is at +Length (Trailing behind).
+                    
+                    lr.SetPosition(i, new Vector3(offX, offY, offZ));
+                }
+                
+                // Do NOT scale Z
+                transform.localScale = Vector3.one; 
+            }
+            else
+            {
+                // -- STRAIT LONG NOTE LOGIC --
+                Vector3 scale = transform.localScale;
+                scale.z = Length;
+                transform.localScale = scale;
+            }
         }
     }
 
@@ -193,4 +290,8 @@ public class Note : MonoBehaviour
             glowLight.intensity = 2.0f;
         }
     }
+
+    // Unified Properties for Position Logic
+    public float HeadZ => isCurved ? transform.position.z : transform.position.z - (Length * 0.5f);
+    public float TailZ => isCurved ? transform.position.z + Length : transform.position.z + (Length * 0.5f);
 }
