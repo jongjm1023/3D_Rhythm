@@ -32,15 +32,19 @@
                 </ui:VisualElement>
 
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="Audio Offset (ms)" class="setting-label" />
-                    <!-- Using SliderInt for offset -1000ms to +1000ms -->
+                    <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between;">
+                        <ui:Label text="Audio Offset (ms)" class="setting-label" />
+                        <ui:Button text="AUTO" name="CalibrateAudioButton" class="mini-button" />
+                    </ui:VisualElement>
                     <ui:SliderInt high-value="1000" low-value="-1000" value="0" name="OffsetSlider" class="setting-slider" />
                     <ui:Label text="0 ms" name="OffsetValueLabel" class="value-label" />
                 </ui:VisualElement>
 
                 <ui:VisualElement class="setting-row">
-                    <ui:Label text="Judgement Offset (Distance)" class="setting-label" />
-                    <!-- Using Slider for distance offset -2.0 to +2.0 -->
+                    <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between;">
+                        <ui:Label text="Judgement Offset (Distance)" class="setting-label" />
+                        <ui:Button text="AUTO" name="CalibrateJudgementButton" class="mini-button" />
+                    </ui:VisualElement>
                     <ui:Slider high-value="2.0" low-value="-2.0" value="0" name="JudgementOffsetSlider" class="setting-slider" />
                     <ui:Label text="0.00" name="JudgementOffsetValueLabel" class="value-label" />
                 </ui:VisualElement>
@@ -52,6 +56,20 @@
                 </ui:VisualElement>
 
                 <ui:Button text="CLOSE" name="CloseSettingsButton" class="close-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Calibration Overlay -->
+        <ui:VisualElement name="CalibrationOverlay" class="calibration-overlay hidden">
+            <ui:Label text="CALIBRATION" class="calibration-title" />
+            <ui:Label text="Tap to the beat!" name="CalibrationInstruction" class="calibration-instruction" />
+            
+            <ui:VisualElement name="BeatIndicator" class="beat-indicator" />
+            
+            <ui:Label text="Progress: 0 / 10" name="CalibrationProgress" class="calibration-progress" />
+            
+            <ui:VisualElement style="flex-direction: row; margin-top: 50px;">
+                <ui:Button text="CANCEL" name="CancelCalibrationButton" class="menu-button" style="width: 150px; margin-right: 20px; background-color: rgba(200,50,50,0.5);" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

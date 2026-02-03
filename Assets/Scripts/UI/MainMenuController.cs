@@ -9,6 +9,9 @@ public class MainMenuController : MonoBehaviour
     private Label _offsetValueLabel;
     private Label _judgementOffsetValueLabel;
     private Label _speedValueLabel; // New
+    private OffsetCalibrator _calibrator;
+    private Slider _judgementOffsetSlider;
+    private SliderInt _audioOffsetSlider;
 
     // PlayerPrefs Keys
     private const string PREF_VOLUME = "MasterVolume";
@@ -34,16 +37,24 @@ public class MainMenuController : MonoBehaviour
         var settingsButton = root.Q<Button>("SettingsButton");
         var exitButton = root.Q<Button>("ExitButton");
         var closeSettingsButton = root.Q<Button>("CloseSettingsButton");
+        var calibrateAudioButton = root.Q<Button>("CalibrateAudioButton");
+        var calibrateJudgementButton = root.Q<Button>("CalibrateJudgementButton");
+        var cancelCalibrationButton = root.Q<Button>("CancelCalibrationButton");
         
         _settingsOverlay = root.Q<VisualElement>("SettingsOverlay");
+        var calibrationOverlay = root.Q<VisualElement>("CalibrationOverlay");
+        
+        _calibrator = gameObject.GetComponent<OffsetCalibrator>();
+        if (_calibrator == null) _calibrator = gameObject.AddComponent<OffsetCalibrator>();
+        _calibrator.Initialize(this, calibrationOverlay);
         
         var volumeSlider = root.Q<Slider>("VolumeSlider");
         var bgmSlider = root.Q<Slider>("BgmVolumeSlider");
         var sfxSlider = root.Q<Slider>("SfxVolumeSlider");
-        var offsetSlider = root.Q<SliderInt>("OffsetSlider");
+        _audioOffsetSlider = root.Q<SliderInt>("OffsetSlider");
         _offsetValueLabel = root.Q<Label>("OffsetValueLabel");
 
-        var judgementOffsetSlider = root.Q<Slider>("JudgementOffsetSlider");
+        _judgementOffsetSlider = root.Q<Slider>("JudgementOffsetSlider");
         _judgementOffsetValueLabel = root.Q<Label>("JudgementOffsetValueLabel");
 
         var speedSlider = root.Q<Slider>("SpeedSlider");
@@ -54,6 +65,10 @@ public class MainMenuController : MonoBehaviour
         if (settingsButton != null) settingsButton.clicked += OnSettingsClicked;
         if (exitButton != null) exitButton.clicked += OnExitClicked;
         if (closeSettingsButton != null) closeSettingsButton.clicked += OnCloseSettingsClicked;
+        
+        if (calibrateAudioButton != null) calibrateAudioButton.clicked += () => _calibrator.StartCalibration(OffsetCalibrator.CalibrationType.Audio);
+        if (calibrateJudgementButton != null) calibrateJudgementButton.clicked += () => _calibrator.StartCalibration(OffsetCalibrator.CalibrationType.Judgement);
+        if (cancelCalibrationButton != null) cancelCalibrationButton.clicked += () => _calibrator.Cancel();
 
         // Initialize Settings
         float currentVolume = PlayerPrefs.GetFloat(PREF_VOLUME, 1.0f);
@@ -85,23 +100,22 @@ public class MainMenuController : MonoBehaviour
         AudioListener.volume = currentVolume;
         if (SongManager.Instance != null)
         {
-            // Initial apply if not already done by SongManager Awake
             SongManager.Instance.SetBGMVolume(currentBgmVolume);
             SongManager.Instance.SetSFXVolume(currentSfxVolume);
         }
 
-        if (offsetSlider != null)
+        if (_audioOffsetSlider != null)
         {
-            offsetSlider.value = currentOffset;
+            _audioOffsetSlider.value = currentOffset;
             UpdateOffsetLabel(currentOffset);
-            offsetSlider.RegisterValueChangedCallback(evt => OnOffsetChanged(evt.newValue));
+            _audioOffsetSlider.RegisterValueChangedCallback(evt => OnOffsetChanged(evt.newValue));
         }
 
-        if (judgementOffsetSlider != null)
+        if (_judgementOffsetSlider != null)
         {
-            judgementOffsetSlider.value = currentJudgementOffset;
+            _judgementOffsetSlider.value = currentJudgementOffset;
             UpdateJudgementOffsetLabel(currentJudgementOffset);
-            judgementOffsetSlider.RegisterValueChangedCallback(evt => OnJudgementOffsetChanged(evt.newValue));
+            _judgementOffsetSlider.RegisterValueChangedCallback(evt => OnJudgementOffsetChanged(evt.newValue));
         }
 
         if (speedSlider != null)
@@ -109,6 +123,22 @@ public class MainMenuController : MonoBehaviour
             speedSlider.value = currentSpeed;
             UpdateSpeedLabel(currentSpeed);
             speedSlider.RegisterValueChangedCallback(evt => OnSpeedChanged(evt.newValue));
+        }
+    }
+
+    private void Update()
+    {
+        // Handle Taps during calibration
+        if (_calibrator != null && _calibrator.IsCalibrating)
+        {
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            
+            if ((kb != null && kb.spaceKey.wasPressedThisFrame) || 
+                (mouse != null && mouse.leftButton.wasPressedThisFrame))
+            {
+                _calibrator.OnTap();
+            }
         }
     }
 
@@ -175,14 +205,9 @@ public class MainMenuController : MonoBehaviour
 
     private void OnOffsetChanged(int newValue)
     {
-        // Update Label
         UpdateOffsetLabel(newValue);
-        
-        // Save Offset
         PlayerPrefs.SetInt(PREF_OFFSET, newValue);
         PlayerPrefs.Save();
-        
-        // NOTE: The actual game logic (NoteSpawner) needs to read this PlayerPrefs key
     }
 
     private void OnJudgementOffsetChanged(float newValue)
@@ -198,11 +223,22 @@ public class MainMenuController : MonoBehaviour
         PlayerPrefs.SetFloat(PREF_NOTE_SPEED, newValue);
         PlayerPrefs.Save();
         
-        // Update SongManager if it exists
         if (SongManager.Instance != null)
         {
             SongManager.Instance.NoteSpeed = newValue;
         }
+    }
+
+    public void ApplyAudioOffsetCalibration(int offsetMs)
+    {
+        if (_audioOffsetSlider != null) _audioOffsetSlider.value = offsetMs;
+        OnOffsetChanged(offsetMs);
+    }
+
+    public void ApplyJudgementOffsetCalibration(float distanceOffset)
+    {
+        if (_judgementOffsetSlider != null) _judgementOffsetSlider.value = distanceOffset;
+        OnJudgementOffsetChanged(distanceOffset);
     }
 
     private void UpdateOffsetLabel(int value)
@@ -217,7 +253,6 @@ public class MainMenuController : MonoBehaviour
     {
         if (_judgementOffsetValueLabel != null)
         {
-            // F2 for 2 decimal places
             _judgementOffsetValueLabel.text = $"{value:F2}"; 
         }
     }
@@ -226,8 +261,6 @@ public class MainMenuController : MonoBehaviour
     {
         if (_speedValueLabel != null)
         {
-            // Display as multiplier relative to base speed 10
-            // 10 -> x1.0, 20 -> x2.0, 1 -> x0.1
             float multiplier = value / 10.0f;
             _speedValueLabel.text = $"x{multiplier:F1}"; 
         }

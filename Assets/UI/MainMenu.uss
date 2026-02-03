@@ -109,3 +109,64 @@
 .close-button:hover {
     background-color: rgb(255, 80, 80);
 }
+.mini-button {
+    width: 60px;
+    height: 30px;
+    font-size: 14px;
+    background-color: rgba(0, 255, 255, 0.2);
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: rgb(0, 255, 255);
+    color: white;
+}
+
+.mini-button:hover {
+    background-color: rgba(0, 255, 255, 0.4);
+}
+
+/* Calibration Overlay */
+.calibration-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(20, 20, 25);
+    align-items: center;
+    justify-content: center;
+    padding: 50px;
+}
+
+.calibration-title {
+    font-size: 48px;
+    -unity-font-style: bold;
+    color: rgb(0, 255, 255);
+    margin-bottom: 20px;
+}
+
+.calibration-instruction {
+    font-size: 24px;
+    color: white;
+    margin-bottom: 50px;
+}
+
+.beat-indicator {
+    width: 150px;
+    height: 150px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-width: 5px;
+    border-color: rgb(0, 255, 255);
+    border-radius: 75px;
+    margin-bottom: 50px;
+    transition-duration: 0.1s;
+}
+
+.beat-indicator.flash {
+    background-color: rgba(0, 255, 255, 0.8);
+    scale: 1.2;
+}
+
+.calibration-progress {
+    font-size: 24px;
+    color: rgb(200, 200, 200);
+}
