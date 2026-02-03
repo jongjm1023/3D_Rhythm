@@ -126,3 +126,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Note
   speed: 10
   destroyZ: -15
+  failMaterial: {fileID: 2100000, guid: f393a13f5bd7bc74599b6bd614fff16b, type: 2}

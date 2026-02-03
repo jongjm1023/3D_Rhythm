@@ -5,6 +5,7 @@ public class Note : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float speed = 10f;
     [SerializeField] private float destroyZ = -80f; // Position behind player to destroy note
+    [SerializeField] private Material failMaterial;
     
     private GameObject bottomGlow;
     private Light glowLight; // Cached reference
@@ -211,29 +212,22 @@ public class Note : MonoBehaviour
         IsUnpressable = true;
         IsHolding = false;
         
-        // Change color to dim gray
-        Color dimGray = new Color(0.3f, 0.3f, 0.3f, 0.5f);
-        SetColor(dimGray, Color.black); // No glow for unpressable
+        // Apply fail material if assigned
+        if (failMaterial != null)
+        {
+            if (noteRenderer != null) noteRenderer.material = failMaterial;
+            
+            LineRenderer lr = GetComponent<LineRenderer>();
+            if (lr != null) lr.material = failMaterial;
+        }
 
         // Disable Light component if it exists
         if (glowLight != null) glowLight.enabled = false;
 
-        // Handle LineRenderer if curved
-        LineRenderer lr = GetComponent<LineRenderer>();
-        if (lr != null)
-        {
-            lr.startColor = dimGray;
-            lr.endColor = dimGray;
-            
-            // Set material color directly as LineRenderer material might not respond to start/end color if using specific shaders
-            if (lr.material != null)
-            {
-                lr.material.color = dimGray;
-                lr.material.SetColor("_EmissionColor", Color.black);
-            }
-        }
+        // Disable bottom glow visuals
+        if (bottomGlow != null) bottomGlow.SetActive(false);
         
-        Debug.Log($"Note at Lane {LaneIndex} is now unpressable.");
+        Debug.Log($"Note at Lane {LaneIndex} is now unpressable with custom fail material.");
     }
 
     public void Initialize(int floorIndex, int laneIndex, float moveSpeed, NoteType type = NoteType.Normal, float durationSeconds = 1.0f, System.Collections.Generic.List<Vector2Int> curvePoints = null)
