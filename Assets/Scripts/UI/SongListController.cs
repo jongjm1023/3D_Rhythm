@@ -38,6 +38,7 @@ public class SongListController : MonoBehaviour
         {
             playButton.clicked += () => 
             {
+                if (SongManager.Instance != null) SongManager.Instance.PlayUIClickSFX();
                 Debug.Log("Play Button Clicked"); // Debugging
                 SongManager.Instance.PlayGame();
             };
@@ -66,6 +67,7 @@ public class SongListController : MonoBehaviour
             // Click Event
             itemContainer.clicked += () => 
             {
+                if (SongManager.Instance != null) SongManager.Instance.PlayUIClickSFX();
                 // Update Logic: Select Song but DO NOT load scene immediately
                 SongManager.Instance.SelectSong(song);
                 

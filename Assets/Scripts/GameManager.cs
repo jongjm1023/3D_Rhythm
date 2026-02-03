@@ -145,10 +145,10 @@ public class GameManager : MonoBehaviour
 
         // Check for New Hits (Keys pressed this frame)
         // Map keys to lanes: A=0, S=1, D=2, F=3
-        if (UnityEngine.InputSystem.Keyboard.current.aKey.wasPressedThisFrame) TryHitNote(0);
-        if (UnityEngine.InputSystem.Keyboard.current.sKey.wasPressedThisFrame) TryHitNote(1);
-        if (UnityEngine.InputSystem.Keyboard.current.dKey.wasPressedThisFrame) TryHitNote(2);
-        if (UnityEngine.InputSystem.Keyboard.current.fKey.wasPressedThisFrame) TryHitNote(3);
+        if (UnityEngine.InputSystem.Keyboard.current.aKey.wasPressedThisFrame) { if(SongManager.Instance != null) SongManager.Instance.PlayHitSFX(); TryHitNote(0); }
+        if (UnityEngine.InputSystem.Keyboard.current.sKey.wasPressedThisFrame) { if(SongManager.Instance != null) SongManager.Instance.PlayHitSFX(); TryHitNote(1); }
+        if (UnityEngine.InputSystem.Keyboard.current.dKey.wasPressedThisFrame) { if(SongManager.Instance != null) SongManager.Instance.PlayHitSFX(); TryHitNote(2); }
+        if (UnityEngine.InputSystem.Keyboard.current.fKey.wasPressedThisFrame) { if(SongManager.Instance != null) SongManager.Instance.PlayHitSFX(); TryHitNote(3); }
     }
 
     private void CheckHoldNotes()

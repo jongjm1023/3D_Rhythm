@@ -35,7 +35,11 @@ public class SongManager : MonoBehaviour
 
     [Header("Audio")]
     [SerializeField] private AudioClip menuBGM;
+    [SerializeField] private AudioClip uiClickSFX; // New
+    [SerializeField] private AudioClip hitSFX;     // New
+    
     private AudioSource musicSource;
+    private AudioSource sfxSource; // New dedicated source for SFX
 
     private void Awake()
     {
@@ -44,11 +48,21 @@ public class SongManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             
-            // Setup AudioSource
+            // Setup AudioSource for Music
             musicSource = gameObject.GetComponent<AudioSource>();
             if (musicSource == null) musicSource = gameObject.AddComponent<AudioSource>();
             musicSource.loop = true;
             musicSource.playOnAwake = false;
+
+            // Setup AudioSource for SFX
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            sfxSource.loop = false;
+            sfxSource.playOnAwake = false;
+            sfxSource.priority = 0; // Highest priority for hit sounds
+            sfxSource.spatialBlend = 0; // 2D Sound
+            sfxSource.bypassEffects = true;
+            sfxSource.bypassListenerEffects = true;
+            sfxSource.bypassReverbZones = true;
 
             // Load Settings
             NoteSpeed = PlayerPrefs.GetFloat("NoteSpeed", 10f);
@@ -128,6 +142,23 @@ public class SongManager : MonoBehaviour
         else
         {
             Debug.LogWarning("SongManager: No song selected to play!");
+        }
+    }
+
+    // SFX Methods
+    public void PlayUIClickSFX()
+    {
+        if (sfxSource != null && uiClickSFX != null)
+        {
+            sfxSource.PlayOneShot(uiClickSFX);
+        }
+    }
+
+    public void PlayHitSFX()
+    {
+        if (sfxSource != null && hitSFX != null)
+        {
+            sfxSource.PlayOneShot(hitSFX);
         }
     }
 }

@@ -99,12 +99,14 @@ public class MainMenuController : MonoBehaviour
 
     private void OnStartClicked()
     {
+        if (SongManager.Instance != null) SongManager.Instance.PlayUIClickSFX();
         Debug.Log("Start Button Clicked. Loading 'Songs' scene...");
         SceneManager.LoadScene("Songs");
     }
 
     private void OnSettingsClicked()
     {
+        if (SongManager.Instance != null) SongManager.Instance.PlayUIClickSFX();
         if (_settingsOverlay != null)
         {
             _settingsOverlay.RemoveFromClassList("hidden");
@@ -113,6 +115,7 @@ public class MainMenuController : MonoBehaviour
 
     private void OnCloseSettingsClicked()
     {
+        if (SongManager.Instance != null) SongManager.Instance.PlayUIClickSFX();
         if (_settingsOverlay != null)
         {
             _settingsOverlay.AddToClassList("hidden");
@@ -121,6 +124,7 @@ public class MainMenuController : MonoBehaviour
 
     private void OnExitClicked()
     {
+        if (SongManager.Instance != null) SongManager.Instance.PlayUIClickSFX();
         Debug.Log("Exit Button Clicked. Quitting application...");
         Application.Quit();
 #if UNITY_EDITOR

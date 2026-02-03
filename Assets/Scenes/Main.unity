@@ -432,6 +432,8 @@ MonoBehaviour:
     maxScore: 0
     maxCombo: 0
   menuBGM: {fileID: 8300000, guid: f17ecb7275aa8fd4c9d1813a0647d6c0, type: 3}
+  uiClickSFX: {fileID: 8300000, guid: e8543597a9030ff4b945bbf727a3bce6, type: 3}
+  hitSFX: {fileID: 8300000, guid: d1e47fea86a361f44b5965db96dade91, type: 3}
 --- !u!4 &1152740104
 Transform:
   m_ObjectHideFlags: 0
