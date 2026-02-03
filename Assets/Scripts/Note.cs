@@ -246,7 +246,7 @@ public class Note : MonoBehaviour
         
         if (Type == NoteType.Normal)
         {
-            Length = 1.0f; 
+            Length = 0.2f; 
         }
         else
         {

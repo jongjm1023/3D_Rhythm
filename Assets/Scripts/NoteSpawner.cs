@@ -277,16 +277,20 @@ public class NoteSpawner : MonoBehaviour
         if (data.floor >= 0 && data.floor < yPositions.Length)
             targetY = yPositions[data.floor];
 
-        float effectiveLength = (data.type == Note.NoteType.Normal) ? 1.0f : data.length;
+        float physicalLength = (data.type == Note.NoteType.Normal) ? 0.2f : (data.length * noteSpeed);
+        
         bool isCurved = (data.curvePoints != null && data.curvePoints.Count > 1);
-        float zOffset = isCurved ? 0f : (effectiveLength * 0.5f);
+        
+        // zOffset: Straight notes are centered, so we offset by Half Length. 
+        // Curved sliders' transform position is their Head, so offset is 0.
+        float zOffset = isCurved ? 0f : (physicalLength * 0.5f);
 
         // Initial Z = (SpawnZ + zOffset) - travelAlreadyDone
         float actualZ = (spawnZ + zOffset) - travelAlreadyDone;
 
         // Failsafe: Don't spawn if already past destruction Z
         const float HARD_DESTROY_Z = -80f; 
-        if (actualZ + effectiveLength < HARD_DESTROY_Z) return;
+        if (actualZ + physicalLength < HARD_DESTROY_Z) return;
 
         Vector3 spawnPos = new Vector3(targetX, targetY, actualZ);
 
