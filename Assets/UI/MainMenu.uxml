@@ -42,11 +42,11 @@
 
                 <ui:VisualElement class="setting-row">
                     <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between;">
-                        <ui:Label text="Judgement Offset (Distance)" class="setting-label" />
+                        <ui:Label text="Judgement Offset (ms)" class="setting-label" />
                         <ui:Button text="AUTO" name="CalibrateJudgementButton" class="mini-button" />
                     </ui:VisualElement>
-                    <ui:Slider high-value="2.0" low-value="-2.0" value="0" name="JudgementOffsetSlider" class="setting-slider" />
-                    <ui:Label text="0.00" name="JudgementOffsetValueLabel" class="value-label" />
+                    <ui:SliderInt high-value="500" low-value="-500" value="0" name="JudgementOffsetSlider" class="setting-slider" />
+                    <ui:Label text="0 ms" name="JudgementOffsetValueLabel" class="value-label" />
                 </ui:VisualElement>
 
                 <ui:VisualElement class="setting-row">
@@ -66,7 +66,7 @@
             
             <ui:VisualElement name="BeatIndicator" class="beat-indicator" />
             
-            <ui:Label text="Progress: 0 / 10" name="CalibrationProgress" class="calibration-progress" />
+            <ui:Label text="Progress: 0 / 6" name="CalibrationProgress" class="calibration-progress" />
             
             <ui:VisualElement style="flex-direction: row; margin-top: 50px;">
                 <ui:Button text="CANCEL" name="CancelCalibrationButton" class="menu-button" style="width: 150px; margin-right: 20px; background-color: rgba(200,50,50,0.5);" />

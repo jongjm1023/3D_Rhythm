@@ -8,12 +8,12 @@ public class OffsetCalibrator : MonoBehaviour
     private CalibrationType currentType;
     
     private bool isCalibrating = false;
-    private float bpm = 120f;
+    private float bpm = 80f; // 120 / 1.5 = 80 BPM
     private float beatInterval;
     private double startTime;
     private List<double> tapDiffs = new List<double>();
     
-    private int requiredTaps = 10;
+    private int requiredTaps = 6;
     private int currentTaps = 0;
     private int nextSoundBeat = 0;
     
@@ -47,6 +47,9 @@ public class OffsetCalibrator : MonoBehaviour
         
         overlay.RemoveFromClassList("hidden");
         UpdateUI();
+        
+        // Stop background music to hear metronome clearly
+        if (SongManager.Instance != null) SongManager.Instance.StopMusic();
         
         // Start metronome
         startTime = AudioSettings.dspTime + 0.5; // 0.5s delay
@@ -117,6 +120,9 @@ public class OffsetCalibrator : MonoBehaviour
         isCalibrating = false;
         overlay.AddToClassList("hidden");
         
+        // Resume background music
+        if (SongManager.Instance != null) SongManager.Instance.PlayMenuMusic();
+        
         if (tapDiffs.Count == 0) return;
 
         double sum = 0;
@@ -132,11 +138,10 @@ public class OffsetCalibrator : MonoBehaviour
         }
         else
         {
-            // Judgement Offset (Distance)
-            // Distance = Time * Speed
-            float speed = PlayerPrefs.GetFloat("NoteSpeed", 10f);
-            float distanceOffset = (float)averageDiff * speed;
-            controller.ApplyJudgementOffsetCalibration(distanceOffset);
+            // Judgement Offset (ms)
+            // If averageDiff is positive (tap late), we need to move the judgement line CLOSER (-ms in time terms, which GameManager translates to distance)
+            int offsetMs = Mathf.RoundToInt((float)(averageDiff * 1000));
+            controller.ApplyJudgementOffsetCalibration(offsetMs);
         }
         
         if (SongManager.Instance != null) SongManager.Instance.PlayUIClickSFX();
@@ -146,6 +151,10 @@ public class OffsetCalibrator : MonoBehaviour
     {
         isCalibrating = false;
         overlay.AddToClassList("hidden");
+        
+        // Resume background music
+        if (SongManager.Instance != null) SongManager.Instance.PlayMenuMusic();
+        
         if (SongManager.Instance != null) SongManager.Instance.PlayUIClickSFX();
     }
 

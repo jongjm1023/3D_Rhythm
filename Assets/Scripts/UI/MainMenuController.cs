@@ -10,7 +10,7 @@ public class MainMenuController : MonoBehaviour
     private Label _judgementOffsetValueLabel;
     private Label _speedValueLabel; // New
     private OffsetCalibrator _calibrator;
-    private Slider _judgementOffsetSlider;
+    private SliderInt _judgementOffsetSlider;
     private SliderInt _audioOffsetSlider;
 
     // PlayerPrefs Keys
@@ -54,7 +54,7 @@ public class MainMenuController : MonoBehaviour
         _audioOffsetSlider = root.Q<SliderInt>("OffsetSlider");
         _offsetValueLabel = root.Q<Label>("OffsetValueLabel");
 
-        _judgementOffsetSlider = root.Q<Slider>("JudgementOffsetSlider");
+        _judgementOffsetSlider = root.Q<SliderInt>("JudgementOffsetSlider");
         _judgementOffsetValueLabel = root.Q<Label>("JudgementOffsetValueLabel");
 
         var speedSlider = root.Q<Slider>("SpeedSlider");
@@ -75,7 +75,7 @@ public class MainMenuController : MonoBehaviour
         float currentBgmVolume = PlayerPrefs.GetFloat(PREF_BGM_VOLUME, 1.0f);
         float currentSfxVolume = PlayerPrefs.GetFloat(PREF_SFX_VOLUME, 1.0f);
         int currentOffset = PlayerPrefs.GetInt(PREF_OFFSET, 0);
-        float currentJudgementOffset = PlayerPrefs.GetFloat(PREF_JUDGEMENT_OFFSET, 0f);
+        int currentJudgementOffset = PlayerPrefs.GetInt(PREF_JUDGEMENT_OFFSET, 0);
         float currentSpeed = PlayerPrefs.GetFloat(PREF_NOTE_SPEED, 10f); // Default 10
 
         if (volumeSlider != null)
@@ -210,10 +210,10 @@ public class MainMenuController : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    private void OnJudgementOffsetChanged(float newValue)
+    private void OnJudgementOffsetChanged(int newValue)
     {
         UpdateJudgementOffsetLabel(newValue);
-        PlayerPrefs.SetFloat(PREF_JUDGEMENT_OFFSET, newValue);
+        PlayerPrefs.SetInt(PREF_JUDGEMENT_OFFSET, newValue);
         PlayerPrefs.Save();
     }
 
@@ -235,10 +235,10 @@ public class MainMenuController : MonoBehaviour
         OnOffsetChanged(offsetMs);
     }
 
-    public void ApplyJudgementOffsetCalibration(float distanceOffset)
+    public void ApplyJudgementOffsetCalibration(int offsetMs)
     {
-        if (_judgementOffsetSlider != null) _judgementOffsetSlider.value = distanceOffset;
-        OnJudgementOffsetChanged(distanceOffset);
+        if (_judgementOffsetSlider != null) _judgementOffsetSlider.value = offsetMs;
+        OnJudgementOffsetChanged(offsetMs);
     }
 
     private void UpdateOffsetLabel(int value)
@@ -249,11 +249,11 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private void UpdateJudgementOffsetLabel(float value)
+    private void UpdateJudgementOffsetLabel(int value)
     {
         if (_judgementOffsetValueLabel != null)
         {
-            _judgementOffsetValueLabel.text = $"{value:F2}"; 
+            _judgementOffsetValueLabel.text = $"{value} ms"; 
         }
     }
 

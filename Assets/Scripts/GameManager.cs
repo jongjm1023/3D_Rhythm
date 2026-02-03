@@ -20,8 +20,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TMP_Text comboText; 
     [SerializeField] private TMP_Text scoreText; 
 
-    [Tooltip("Adjust hit timing. Positive: Late Hit (Closer to Player), Negative: Early Hit (Further)")]
-    [SerializeField] private float judgementOffset = 0f;
+    [Tooltip("Adjust hit timing in Milliseconds. Positive: Late Hit (Closer to Player), Negative: Early Hit (Further)")]
+    [SerializeField] private int judgementOffsetMs = 0;
     [Header("Result UI")]
     [SerializeField] private GameObject resultPanel;
     [SerializeField] private TMP_Text resultScoreText;
@@ -56,9 +56,9 @@ public class GameManager : MonoBehaviour
                 Camera.main.backgroundColor = new Color(0f, 0f, 30f/255f);
             }
 
-            // Load Judgement Offset
-            judgementOffset = PlayerPrefs.GetFloat("JudgementOffset", 0f);
-            Debug.Log($"GameManager: Loaded Judgement Offset: {judgementOffset}");
+            // Load Judgement Offset (ms)
+            judgementOffsetMs = PlayerPrefs.GetInt("JudgementOffset", 0);
+            Debug.Log($"GameManager: Loaded Judgement Offset: {judgementOffsetMs}ms");
 
             // Auto-discover Gameplay UI if not assigned
             if (gameplayUI == null)
@@ -176,7 +176,7 @@ public class GameManager : MonoBehaviour
                 // Check if the tail has already passed the line (Late Over-hold)
                 float tailZ = note.TailZ;
                 float barZ = touchBar.transform.position.z;
-                float targetZ = barZ + judgementOffset;
+                float targetZ = barZ - GetPhysicalJudgementOffset();
 
                 // Threshold: If tail is past the "Bad" window (same logic as Normal note miss)
                 float overHoldThreshold = 1.4f * (note.IsCurved ? 1.0f : 1.0f);
@@ -229,7 +229,7 @@ public class GameManager : MonoBehaviour
                 // Key released -> Judge Release (Tail)
                 float tailZ = note.TailZ;
                 float barZ = touchBar.transform.position.z;
-                float targetZ = barZ + judgementOffset; 
+                float targetZ = barZ - GetPhysicalJudgementOffset(); 
                 float dist = Mathf.Abs(tailZ - targetZ);
 
                 JudgeHit(note, dist, true); // true = isTail
@@ -273,7 +273,7 @@ public class GameManager : MonoBehaviour
             // HeadZ decreases as it moves. TargetZ is fixed (~0).
             // If HeadZ < TargetZ - Window, it's irrelevant.
             float hZ = note.HeadZ;
-            float tZ = touchBar.transform.position.z + judgementOffset;
+            float tZ = touchBar.transform.position.z - GetPhysicalJudgementOffset();
             float rawDiff = hZ - tZ;
             
             // Bad Window = 1.4 * Multiplier.
@@ -303,7 +303,7 @@ public class GameManager : MonoBehaviour
             float headZ = closestNote.HeadZ;
             float barZ = touchBar.transform.position.z;
             
-            float targetZ = barZ + judgementOffset;
+            float targetZ = barZ - GetPhysicalJudgementOffset();
             float dist = Mathf.Abs(headZ - targetZ);
 
             JudgeHit(closestNote, dist, false);
@@ -505,7 +505,18 @@ public class GameManager : MonoBehaviour
         return touchBar != null ? touchBar.transform.position.z : 0f;
     }
 
-    public float TargetZ => GetTouchBarZ() + judgementOffset;
+    public float TargetZ => GetTouchBarZ() - GetPhysicalJudgementOffset();
+
+    private float GetPhysicalJudgementOffset()
+    {
+        // Convert ms to seconds and multiply by note speed
+        // Speed is cached as multiplier or we can get it from SongManager
+        float currentSpeed = 10f;
+        if (SongManager.Instance != null) currentSpeed = SongManager.Instance.NoteSpeed;
+        else currentSpeed = PlayerPrefs.GetFloat("NoteSpeed", 10f);
+
+        return (judgementOffsetMs / 1000f) * currentSpeed;
+    }
 
     // ... (existing code)
 
