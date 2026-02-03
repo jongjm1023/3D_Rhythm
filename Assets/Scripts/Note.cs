@@ -260,67 +260,128 @@ public class Note : MonoBehaviour
                 if (GetComponent<Renderer>()) GetComponent<Renderer>().enabled = false;
                 if (bottomGlow != null) bottomGlow.SetActive(false); // Disable glow for curve (or handle custom glow later)
 
-                // 2. Setup LineRenderer
-                LineRenderer lr = GetComponent<LineRenderer>();
-                if (lr == null) lr = gameObject.AddComponent<LineRenderer>();
+                // 2. Setup Mesh (instead of LineRenderer)
+                MeshFilter mf = GetComponent<MeshFilter>();
+                if (mf == null) mf = gameObject.AddComponent<MeshFilter>();
                 
-                lr.useWorldSpace = false; // Move with parent
+                MeshRenderer mr = GetComponent<MeshRenderer>();
+                if (mr == null) mr = gameObject.AddComponent<MeshRenderer>();
                 
-                // Match width to the Note's physical width (X scale)
-                float noteWidth = transform.localScale.x;
-                lr.startWidth = noteWidth;
-                lr.endWidth = noteWidth;
-                
-                // Use the same material as the Note Mesh to ensure visibility and matching style (Glow/Color)
-                if (GetComponent<Renderer>() != null)
-                {
-                    lr.material = GetComponent<Renderer>().material;
-                }
-                else
-                {
-                    // Fallback if no renderer (unlikely)
-                    lr.material = new Material(Shader.Find("Standard")); 
-                }
-                
-                // Material already has color. Set Vertex Color to White to avoid multiplying tint.
-                lr.startColor = Color.white;
-                lr.endColor = Color.white;
+                // Ensure renderer is enabled for the mesh we're about to generate
+                mr.enabled = true;
 
-                // 3. Generate Points
-                int count = curvePoints.Count;
-                lr.positionCount = count;
+                // 3. Generate 3D Cuboid Mesh
+                float noteWidth = transform.localScale.x;
+                float noteHeight = 0.4f; // Fixed height for curved sliders
+                mf.mesh = GenerateCurvedMesh(noteWidth, noteHeight);
                 
-                float spacingX = 2.5f;
-                float spacingY = 2.75f;
-                
-                for (int i = 0; i < count; i++)
-                {
-                    Vector2Int p = curvePoints[i];
-                    
-                    // X/Y Offset relative to Head
-                    float offX = (p.x - LaneIndex) * spacingX;
-                    float offY = (p.y - FloorIndex) * spacingY;
-                    
-                    // Z Position: Interpolate from 0 (Head) to Length (Tail)
-                    // Assuming points are uniformly distributed in time/Z
-                    float t = (float)i / (count - 1);
-                    float offZ = t * Length; // Positive Z extends upwards/backwards relative to movement direction?
-                    // Note moves -Z. Head is at 0. Tail is at +Length (Trailing behind).
-                    
-                    lr.SetPosition(i, new Vector3(offX, offY, offZ));
-                }
+                // Use the same material logic as before
+                // Renderer component is already on the prefab usually
                 
                 // Do NOT scale Z
                 transform.localScale = Vector3.one; 
             }
             else
             {
-                // -- STRAIT LONG NOTE LOGIC --
+                // -- STRAIGHT LONG NOTE LOGIC --
                 Vector3 scale = transform.localScale;
                 scale.z = Length;
                 transform.localScale = scale;
             }
         }
+    }
+
+    private Mesh GenerateCurvedMesh(float width, float height)
+    {
+        if (curvePoints == null || curvePoints.Count < 2) return null;
+
+        Mesh mesh = new Mesh();
+        mesh.name = "CurvedSliderMesh";
+
+        System.Collections.Generic.List<Vector3> worldPoints = new System.Collections.Generic.List<Vector3>();
+        float spacingX = 2.5f;
+        float spacingY = 2.75f;
+
+        for (int i = 0; i < curvePoints.Count; i++)
+        {
+            Vector2Int p = curvePoints[i];
+            float offX = (p.x - LaneIndex) * spacingX;
+            float offY = (p.y - FloorIndex) * spacingY;
+            float t = (float)i / (curvePoints.Count - 1);
+            float offZ = t * Length;
+            worldPoints.Add(new Vector3(offX, offY, offZ));
+        }
+
+        int segments = worldPoints.Count - 1;
+        int vertexCount = worldPoints.Count * 4;
+        Vector3[] vertices = new Vector3[vertexCount];
+        int[] triangles = new int[segments * 24 + 12]; // 4 faces * 2 tris * 3 indices * segments + 2 caps * 2 tris * 3 indices
+
+        float hw = width * 0.5f;
+        float hh = height * 0.5f;
+
+        for (int i = 0; i < worldPoints.Count; i++)
+        {
+            Vector3 forward;
+            if (i < worldPoints.Count - 1)
+            {
+                forward = (worldPoints[i + 1] - worldPoints[i]).normalized;
+            }
+            else
+            {
+                forward = (worldPoints[i] - worldPoints[i - 1]).normalized;
+            }
+
+            // Simple Right/Up calculation for rhythm game curve (mostly Z-forward)
+            Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+            if (right.sqrMagnitude < 0.01f) right = Vector3.right;
+            Vector3 up = Vector3.Cross(forward, right).normalized;
+
+            // 4 vertices for the rectangle cross-section
+            vertices[i * 4 + 0] = worldPoints[i] + (right * -hw) + (up * hh);  // Top Left
+            vertices[i * 4 + 1] = worldPoints[i] + (right * hw) + (up * hh);   // Top Right
+            vertices[i * 4 + 2] = worldPoints[i] + (right * hw) + (up * -hh);  // Bottom Right
+            vertices[i * 4 + 3] = worldPoints[i] + (right * -hw) + (up * -hh); // Bottom Left
+        }
+
+        int triIdx = 0;
+        for (int i = 0; i < segments; i++)
+        {
+            int curr = i * 4;
+            int next = (i + 1) * 4;
+
+            // Top Face
+            triangles[triIdx++] = curr + 0; triangles[triIdx++] = next + 0; triangles[triIdx++] = next + 1;
+            triangles[triIdx++] = curr + 0; triangles[triIdx++] = next + 1; triangles[triIdx++] = curr + 1;
+
+            // Right Face
+            triangles[triIdx++] = curr + 1; triangles[triIdx++] = next + 1; triangles[triIdx++] = next + 2;
+            triangles[triIdx++] = curr + 1; triangles[triIdx++] = next + 2; triangles[triIdx++] = curr + 2;
+
+            // Bottom Face
+            triangles[triIdx++] = curr + 2; triangles[triIdx++] = next + 2; triangles[triIdx++] = next + 3;
+            triangles[triIdx++] = curr + 2; triangles[triIdx++] = next + 3; triangles[triIdx++] = curr + 3;
+
+            // Left Face
+            triangles[triIdx++] = curr + 3; triangles[triIdx++] = next + 3; triangles[triIdx++] = next + 0;
+            triangles[triIdx++] = curr + 3; triangles[triIdx++] = next + 0; triangles[triIdx++] = curr + 0;
+        }
+
+        // Start Cap
+        triangles[triIdx++] = 0; triangles[triIdx++] = 1; triangles[triIdx++] = 2;
+        triangles[triIdx++] = 0; triangles[triIdx++] = 2; triangles[triIdx++] = 3;
+
+        // End Cap
+        int last = (worldPoints.Count - 1) * 4;
+        triangles[triIdx++] = last + 0; triangles[triIdx++] = last + 2; triangles[triIdx++] = last + 1;
+        triangles[triIdx++] = last + 0; triangles[triIdx++] = last + 3; triangles[triIdx++] = last + 2;
+
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        return mesh;
     }
 
     public void SetColor(Color noteColor, Color glowColor)
