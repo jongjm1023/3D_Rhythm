@@ -41,6 +41,8 @@ public class Note : MonoBehaviour
     }
 
     private bool isCurved = false;
+    public bool IsCurved => isCurved;
+    private System.Collections.Generic.List<Vector2Int> curvePoints;
     private bool hasMissed = false;
 
     private void Update()
@@ -172,6 +174,37 @@ public class Note : MonoBehaviour
     public bool IsUnpressable { get; private set; } = false;
     public float HoldScoreTimer { get; set; } = 0f;
 
+    public Vector3 GetCurveTargetPosition(float localZ)
+    {
+        if (!isCurved || curvePoints == null || curvePoints.Count < 2) return Vector3.zero;
+
+        // Map localZ (0 to Length) to 0..1 interval
+        float t = Mathf.Clamp01(localZ / Length);
+        
+        // Find the segment
+        float scaledT = t * (curvePoints.Count - 1);
+        int idx = Mathf.FloorToInt(scaledT);
+        int nextIdx = Mathf.Min(idx + 1, curvePoints.Count - 1);
+        float lerpT = scaledT - idx;
+
+        Vector2Int p1 = curvePoints[idx];
+        Vector2Int p2 = curvePoints[nextIdx];
+
+        float spacingX = 2.5f;
+        float spacingY = 2.75f;
+
+        // X/Y Offset relative to Head (which is at transform.position)
+        float x1 = (p1.x - LaneIndex) * spacingX;
+        float x2 = (p2.x - LaneIndex) * spacingX;
+        float targetLocalX = Mathf.Lerp(x1, x2, lerpT);
+
+        float y1 = (p1.y - FloorIndex) * spacingY;
+        float y2 = (p2.y - FloorIndex) * spacingY;
+        float targetLocalY = Mathf.Lerp(y1, y2, lerpT);
+
+        return new Vector3(targetLocalX, targetLocalY, localZ);
+    }
+
     public void SetUnpressable()
     {
         if (IsUnpressable) return;
@@ -209,6 +242,7 @@ public class Note : MonoBehaviour
         LaneIndex = laneIndex;
         speed = moveSpeed;
         Type = type;
+        this.curvePoints = curvePoints;
         
         if (Type == NoteType.Normal)
         {

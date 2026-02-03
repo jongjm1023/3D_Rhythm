@@ -186,6 +186,28 @@ public class GameManager : MonoBehaviour
                     continue; // Note is destroyed in JudgeHit
                 }
 
+                // Curved Slider Y-Matching Check
+                if (note.IsCurved)
+                {
+                    // localZ is the distance from the head back to the bar
+                    float localZAtBar = targetZ - note.HeadZ; 
+                    
+                    Vector3 targetLocalPos = note.GetCurveTargetPosition(localZAtBar);
+                    float targetWorldY = note.transform.position.y + targetLocalPos.y;
+                    
+                    float yDiff = Mathf.Abs(targetWorldY - touchBar.transform.position.y);
+                    
+                    // Threshold: 1.25f (roughly half the distance between floors, which is 2.75f)
+                    if (yDiff > 2.5f)
+                    {
+                        Debug.Log($"[Curved Slider] Y-Mismatch! Target: {targetWorldY:F2}, Current: {touchBar.transform.position.y:F2}, Diff: {yDiff:F2}. Forcing Miss.");
+                        ShowJudgementUI("MISS");
+                        note.SetUnpressable();
+                        UnregisterNote(note); 
+                        continue;
+                    }
+                }
+
                 // Continuous scoring logic (0.5s ticks)
                 note.HoldScoreTimer += Time.deltaTime;
                 if (note.HoldScoreTimer >= 0.5f)
