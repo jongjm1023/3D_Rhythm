@@ -171,16 +171,41 @@ public class GameManager : MonoBehaviour
                 case 3: keyHeld = kb.fKey.isPressed; break;
             }
 
-            if (!keyHeld)
+            if (keyHeld)
             {
-
-                // Tail = Center + ScaleZ/2. (Tail is at larger Z, arrives later).
-                
-                // Tail Position using unified property
+                // Check if the tail has already passed the line (Late Over-hold)
                 float tailZ = note.TailZ;
                 float barZ = touchBar.transform.position.z;
-                
-                // Calculate distance relative to Adjusted Hit Line
+                float targetZ = barZ + judgementOffset;
+
+                // Threshold: If tail is past the "Bad" window (same logic as Normal note miss)
+                if (tailZ < targetZ - (1.4f * speedMultiplier))
+                {
+                    Debug.Log("Long Note Over-held! Forcing Late Miss.");
+                    JudgeHit(note, Mathf.Abs(tailZ - targetZ), true); // This will trigger MISS
+                    continue; // Note is destroyed in JudgeHit
+                }
+
+                // Continuous scoring logic (0.5s ticks)
+                note.HoldScoreTimer += Time.deltaTime;
+                if (note.HoldScoreTimer >= 0.5f)
+                {
+                    note.HoldScoreTimer -= 0.5f;
+                    
+                    // Add small score and increment combo
+                    Score += 50; 
+                    Combo++;
+                    if (Combo > maxCombo) maxCombo = Combo;
+                    
+                    UpdateComboUI();
+                    UpdateScoreUI();
+                }
+            }
+            else
+            {
+                // Key released -> Judge Release (Tail)
+                float tailZ = note.TailZ;
+                float barZ = touchBar.transform.position.z;
                 float targetZ = barZ + judgementOffset; 
                 float dist = Mathf.Abs(tailZ - targetZ);
 
@@ -216,6 +241,7 @@ public class GameManager : MonoBehaviour
         {
             if (note.IsHit) continue; 
             if (note.IsHolding) continue; // Already holding this one
+            if (note.IsUnpressable) continue; // Skip notes that were missed at head
             if (note.LaneIndex != laneIndex) continue;
             if (note.FloorIndex != currentFloor) continue;
 
@@ -339,10 +365,11 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    // Missed the head = Miss the whole note
-                    Debug.Log("Long Note Missed Head");
+                    // Missed the head = Note becomes unpressable but continues moving
+                    Debug.Log("Long Note Missed Head - Setting Unpressable");
                     ShowJudgementUI("MISS");
-                    DestroyNote(note);
+                    note.SetUnpressable();
+                    UnregisterNote(note); // No more tracking for this note
                 }
                 return; // Don't destroy yet
             }

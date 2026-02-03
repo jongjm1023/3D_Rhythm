@@ -56,8 +56,15 @@ public class Note : MonoBehaviour
             {
                  Debug.Log("Early Miss Triggered!");
                  GameManager.Instance.OnNoteMiss();
+                 hasMissed = true; // Prevents repeated triggers
+                 
+                 if (Type == NoteType.Long)
+                 {
+                     SetUnpressable();
+                 }
+                 
+                 // Always unregister when a miss is confirmed
                  GameManager.Instance.UnregisterNote(this);
-                 hasMissed = true;
             }
         }
 
@@ -161,6 +168,40 @@ public class Note : MonoBehaviour
     public int FloorIndex { get; private set; }
     public int LaneIndex { get; private set; }
     public bool IsHit { get; set; } = false; // Prevent double hitting
+    
+    public bool IsUnpressable { get; private set; } = false;
+    public float HoldScoreTimer { get; set; } = 0f;
+
+    public void SetUnpressable()
+    {
+        if (IsUnpressable) return;
+        IsUnpressable = true;
+        IsHolding = false;
+        
+        // Change color to dim gray
+        Color dimGray = new Color(0.3f, 0.3f, 0.3f, 0.5f);
+        SetColor(dimGray, Color.black); // No glow for unpressable
+
+        // Disable Light component if it exists
+        if (glowLight != null) glowLight.enabled = false;
+
+        // Handle LineRenderer if curved
+        LineRenderer lr = GetComponent<LineRenderer>();
+        if (lr != null)
+        {
+            lr.startColor = dimGray;
+            lr.endColor = dimGray;
+            
+            // Set material color directly as LineRenderer material might not respond to start/end color if using specific shaders
+            if (lr.material != null)
+            {
+                lr.material.color = dimGray;
+                lr.material.SetColor("_EmissionColor", Color.black);
+            }
+        }
+        
+        Debug.Log($"Note at Lane {LaneIndex} is now unpressable.");
+    }
 
     public void Initialize(int floorIndex, int laneIndex, float moveSpeed, NoteType type = NoteType.Normal, float durationSeconds = 1.0f, System.Collections.Generic.List<Vector2Int> curvePoints = null)
     {
