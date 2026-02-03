@@ -67,12 +67,42 @@ public class SongManager : MonoBehaviour
             // Load Settings
             NoteSpeed = PlayerPrefs.GetFloat("NoteSpeed", 10f);
             
+            // Volume Settings
+            BGMVolume = PlayerPrefs.GetFloat("BGMVolume", 1.0f);
+            SFXVolume = PlayerPrefs.GetFloat("SFXVolume", 1.0f);
+            UpdateAudioVolumes();
+
             LoadSongStats(); // Load on Startup
         }
         else
         {
             Destroy(gameObject);
         }
+    }
+
+    public float BGMVolume { get; private set; } = 1.0f;
+    public float SFXVolume { get; private set; } = 1.0f;
+
+    public void SetBGMVolume(float volume)
+    {
+        BGMVolume = volume;
+        UpdateAudioVolumes();
+        PlayerPrefs.SetFloat("BGMVolume", volume);
+        PlayerPrefs.Save();
+    }
+
+    public void SetSFXVolume(float volume)
+    {
+        SFXVolume = volume;
+        UpdateAudioVolumes();
+        PlayerPrefs.SetFloat("SFXVolume", volume);
+        PlayerPrefs.Save();
+    }
+
+    private void UpdateAudioVolumes()
+    {
+        if (musicSource != null) musicSource.volume = BGMVolume;
+        if (sfxSource != null) sfxSource.volume = SFXVolume;
     }
 
     public void SaveSongStats(SongData data)

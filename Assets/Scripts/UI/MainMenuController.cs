@@ -12,6 +12,8 @@ public class MainMenuController : MonoBehaviour
 
     // PlayerPrefs Keys
     private const string PREF_VOLUME = "MasterVolume";
+    private const string PREF_BGM_VOLUME = "BGMVolume";
+    private const string PREF_SFX_VOLUME = "SFXVolume";
     private const string PREF_OFFSET = "AudioOffset";
     private const string PREF_JUDGEMENT_OFFSET = "JudgementOffset";
     private const string PREF_NOTE_SPEED = "NoteSpeed"; // New
@@ -36,6 +38,8 @@ public class MainMenuController : MonoBehaviour
         _settingsOverlay = root.Q<VisualElement>("SettingsOverlay");
         
         var volumeSlider = root.Q<Slider>("VolumeSlider");
+        var bgmSlider = root.Q<Slider>("BgmVolumeSlider");
+        var sfxSlider = root.Q<Slider>("SfxVolumeSlider");
         var offsetSlider = root.Q<SliderInt>("OffsetSlider");
         _offsetValueLabel = root.Q<Label>("OffsetValueLabel");
 
@@ -53,6 +57,8 @@ public class MainMenuController : MonoBehaviour
 
         // Initialize Settings
         float currentVolume = PlayerPrefs.GetFloat(PREF_VOLUME, 1.0f);
+        float currentBgmVolume = PlayerPrefs.GetFloat(PREF_BGM_VOLUME, 1.0f);
+        float currentSfxVolume = PlayerPrefs.GetFloat(PREF_SFX_VOLUME, 1.0f);
         int currentOffset = PlayerPrefs.GetInt(PREF_OFFSET, 0);
         float currentJudgementOffset = PlayerPrefs.GetFloat(PREF_JUDGEMENT_OFFSET, 0f);
         float currentSpeed = PlayerPrefs.GetFloat(PREF_NOTE_SPEED, 10f); // Default 10
@@ -62,9 +68,27 @@ public class MainMenuController : MonoBehaviour
             volumeSlider.value = currentVolume;
             volumeSlider.RegisterValueChangedCallback(evt => OnVolumeChanged(evt.newValue));
         }
+
+        if (bgmSlider != null)
+        {
+            bgmSlider.value = currentBgmVolume;
+            bgmSlider.RegisterValueChangedCallback(evt => OnBgmVolumeChanged(evt.newValue));
+        }
+
+        if (sfxSlider != null)
+        {
+            sfxSlider.value = currentSfxVolume;
+            sfxSlider.RegisterValueChangedCallback(evt => OnSfxVolumeChanged(evt.newValue));
+        }
         
-        // Apply initial volume
+        // Apply initial volumes
         AudioListener.volume = currentVolume;
+        if (SongManager.Instance != null)
+        {
+            // Initial apply if not already done by SongManager Awake
+            SongManager.Instance.SetBGMVolume(currentBgmVolume);
+            SongManager.Instance.SetSFXVolume(currentSfxVolume);
+        }
 
         if (offsetSlider != null)
         {
@@ -137,6 +161,16 @@ public class MainMenuController : MonoBehaviour
         AudioListener.volume = newValue;
         PlayerPrefs.SetFloat(PREF_VOLUME, newValue);
         PlayerPrefs.Save();
+    }
+
+    private void OnBgmVolumeChanged(float newValue)
+    {
+        if (SongManager.Instance != null) SongManager.Instance.SetBGMVolume(newValue);
+    }
+
+    private void OnSfxVolumeChanged(float newValue)
+    {
+        if (SongManager.Instance != null) SongManager.Instance.SetSFXVolume(newValue);
     }
 
     private void OnOffsetChanged(int newValue)
