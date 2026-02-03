@@ -179,7 +179,7 @@ public class GameManager : MonoBehaviour
                 float targetZ = barZ + judgementOffset;
 
                 // Threshold: If tail is past the "Bad" window (same logic as Normal note miss)
-                float overHoldThreshold = 1.4f * (note.IsCurved ? 1.5f : 1.0f);
+                float overHoldThreshold = 1.4f * (note.IsCurved ? 1.0f : 1.0f);
                 if (tailZ < targetZ - (overHoldThreshold * speedMultiplier))
                 {
                     Debug.Log("Long Note Over-held! Forcing Late Miss.");
@@ -313,7 +313,7 @@ public class GameManager : MonoBehaviour
     private void JudgeHit(Note note, float distance, bool isTail)
     {
         // Accuracy windows
-        float leniencyMultiplier = (isTail && note.IsCurved) ? 2.0f : 1.0f;
+        float leniencyMultiplier = (isTail && note.IsCurved) ? 1.5f : 1.0f;
         
         string judgement = "";
         int scoreAdd = 0;
@@ -504,6 +504,8 @@ public class GameManager : MonoBehaviour
     {
         return touchBar != null ? touchBar.transform.position.z : 0f;
     }
+
+    public float TargetZ => GetTouchBarZ() + judgementOffset;
 
     // ... (existing code)
 

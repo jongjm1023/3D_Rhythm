@@ -11,11 +11,15 @@ public class Note : MonoBehaviour
     private Light glowLight; // Cached reference
 
     private Renderer noteRenderer;
+    private MeshFilter meshFilter;
+    private MeshRenderer meshRenderer;
 
     private void Start()
     {
         InitializeBottomGlow();
         noteRenderer = GetComponent<Renderer>();
+        meshFilter = GetComponent<MeshFilter>();
+        meshRenderer = GetComponent<MeshRenderer>();
     }
 
     private void InitializeBottomGlow()
@@ -45,6 +49,9 @@ public class Note : MonoBehaviour
     public bool IsCurved => isCurved;
     private System.Collections.Generic.List<Vector2Int> curvePoints;
     private bool hasMissed = false;
+    
+    private float visualWidth = 1.0f;
+    private float visualHeight = 1.0f;
 
     private void Update()
     {
@@ -87,29 +94,40 @@ public class Note : MonoBehaviour
                 bottomGlow.SetActive(false);
             }
 
-            // If Curved, we do NOT shrink visually (Too complex for LineRenderer clip).
-            // We just let it slide through the bar.
-            // Logic relies on constant Length and moving Position to determine Tail Z.
+            float targetZ = GameManager.Instance.TargetZ;
+
+            // If Curved, we regenerate the mesh to clip the part past the bar
             if (isCurved)
             {
+                float localClipZ = targetZ - transform.position.z;
+                
+                if (localClipZ >= Length)
+                {
+                    // Fully Consumed
+                    if (meshRenderer != null) meshRenderer.enabled = false;
+                    return;
+                }
+
+                // Regenerate mesh starting from localClipZ
+                if (meshFilter != null)
+                {
+                    meshFilter.mesh = GenerateCurvedMesh(visualWidth, visualHeight, localClipZ);
+                }
                 return;
             }
 
-            float barZ = GameManager.Instance.GetTouchBarZ();
-            
-            // Calculate Current Physical Tail Z (based on current clamped state)
-            // Tail = Center + HalfScale
+            // ... (Same logic for straight notes)
             float halfScale = transform.localScale.z * 0.5f;
             float currentHeadZ = transform.position.z - halfScale;
             float currentTailZ = transform.position.z + halfScale;
 
             // Check if Head is past bar
-            if (currentHeadZ < barZ)
+            if (currentHeadZ < targetZ)
             {
                 // Logic: How much "Tail" is left above the bar?
                 // Visual Length = TailZ - BarZ
                 // ... (Same logic for straight notes)
-                float newLength = currentTailZ - barZ;
+                float newLength = currentTailZ - targetZ;
 
                 if (newLength <= 0f)
                 {
@@ -129,7 +147,7 @@ public class Note : MonoBehaviour
                 else
                 {
                     // Update Visuals: Anchor Head to Bar
-                    float newZ = barZ + (newLength * 0.5f);
+                    float newZ = targetZ + (newLength * 0.5f);
 
                     transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, newLength);
                     transform.position = new Vector3(transform.position.x, transform.position.y, newZ);
@@ -271,9 +289,10 @@ public class Note : MonoBehaviour
                 mr.enabled = true;
 
                 // 3. Generate 3D Cuboid Mesh
-                float noteWidth = transform.localScale.x;
-                float noteHeight = 0.4f; // Fixed height for curved sliders
-                mf.mesh = GenerateCurvedMesh(noteWidth, noteHeight);
+                visualWidth = transform.localScale.x;
+                visualHeight = 1f; // USER set this to 1f
+                if (meshFilter == null) meshFilter = GetComponent<MeshFilter>();
+                if (meshFilter != null) meshFilter.mesh = GenerateCurvedMesh(visualWidth, visualHeight);
                 
                 // Use the same material logic as before
                 // Renderer component is already on the prefab usually
@@ -291,7 +310,7 @@ public class Note : MonoBehaviour
         }
     }
 
-    private Mesh GenerateCurvedMesh(float width, float height)
+    private Mesh GenerateCurvedMesh(float width, float height, float startClipZ = 0f)
     {
         if (curvePoints == null || curvePoints.Count < 2) return null;
 
@@ -302,6 +321,8 @@ public class Note : MonoBehaviour
         float spacingX = 2.5f;
         float spacingY = 2.75f;
 
+        // Generate the base spline points
+        System.Collections.Generic.List<Vector3> splinePoints = new System.Collections.Generic.List<Vector3>();
         for (int i = 0; i < curvePoints.Count; i++)
         {
             Vector2Int p = curvePoints[i];
@@ -309,8 +330,31 @@ public class Note : MonoBehaviour
             float offY = (p.y - FloorIndex) * spacingY;
             float t = (float)i / (curvePoints.Count - 1);
             float offZ = t * Length;
-            worldPoints.Add(new Vector3(offX, offY, offZ));
+            splinePoints.Add(new Vector3(offX, offY, offZ));
         }
+
+        // Apply Clipping: We need points where offZ >= startClipZ
+        // If clipping happens mid-segment, we interpolate
+        for (int i = 0; i < splinePoints.Count; i++)
+        {
+            float z = splinePoints[i].z;
+            
+            if (z < startClipZ)
+            {
+                // Check if next point is past clip
+                if (i < splinePoints.Count - 1 && splinePoints[i + 1].z > startClipZ)
+                {
+                    // Interpolate point exactly at startClipZ
+                    float t = (startClipZ - splinePoints[i].z) / (splinePoints[i + 1].z - splinePoints[i].z);
+                    worldPoints.Add(Vector3.Lerp(splinePoints[i], splinePoints[i + 1], t));
+                }
+                continue;
+            }
+            
+            worldPoints.Add(splinePoints[i]);
+        }
+
+        if (worldPoints.Count < 2) return null;
 
         int segments = worldPoints.Count - 1;
         int vertexCount = worldPoints.Count * 4;
