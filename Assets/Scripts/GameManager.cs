@@ -179,7 +179,8 @@ public class GameManager : MonoBehaviour
                 float targetZ = barZ + judgementOffset;
 
                 // Threshold: If tail is past the "Bad" window (same logic as Normal note miss)
-                if (tailZ < targetZ - (1.4f * speedMultiplier))
+                float overHoldThreshold = 1.4f * (note.IsCurved ? 1.5f : 1.0f);
+                if (tailZ < targetZ - (overHoldThreshold * speedMultiplier))
                 {
                     Debug.Log("Long Note Over-held! Forcing Late Miss.");
                     JudgeHit(note, Mathf.Abs(tailZ - targetZ), true); // This will trigger MISS
@@ -312,34 +313,35 @@ public class GameManager : MonoBehaviour
     private void JudgeHit(Note note, float distance, bool isTail)
     {
         // Accuracy windows
+        float leniencyMultiplier = (isTail && note.IsCurved) ? 2.0f : 1.0f;
         
         string judgement = "";
         int scoreAdd = 0;
 
         // Base Thresholds: Perfect=0.5, Great=0.8, Good=1.1, Bad=1.4 (at Speed 10)
         // Scaled by speedMultiplier (Cached in Start)
-        if (distance <= 0.5f * speedMultiplier)
+        if (distance <= 0.5f * speedMultiplier * leniencyMultiplier)
         {
             judgement = "PERFECT";
             scoreAdd = 500;
             Combo++;
             perfectCount++;
         }
-        else if (distance <= 0.8f * speedMultiplier)
+        else if (distance <= 0.8f * speedMultiplier * leniencyMultiplier)
         {
             judgement = "GREAT";
             scoreAdd = 300;
             Combo++;
             greatCount++;
         }
-        else if (distance <= 1.1f * speedMultiplier)
+        else if (distance <= 1.1f * speedMultiplier * leniencyMultiplier)
         {
             judgement = "GOOD";
             scoreAdd = 100;
             Combo++;
             goodCount++;
         }
-        else if (distance <= 1.4f * speedMultiplier)
+        else if (distance <= 1.4f * speedMultiplier * leniencyMultiplier)
         {
             judgement = "BAD";
             scoreAdd = 50;
