@@ -413,22 +413,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SongManager
   songLibrary:
-  - title: Test1
-    artist: A
-    bpm: 100
+  - title: "\uBE4C\uB824\uC628 \uACE0\uC591\uC774"
+    artist: ILLIT
+    bpm: 130
     level: 2
     albumCover: {fileID: 2800000, guid: 766d15646e110714dbae026a5f056998, type: 3}
     musicInfo: {fileID: 8300000, guid: 3f60308c65964e74daee53eabf50e264, type: 3}
-    beatmap: {fileID: 4900000, guid: 6412db9942981fb4891d828943aea10f, type: 3}
+    beatmap: {fileID: 4900000, guid: 4fd3c965395400b4781fbacbfd84f602, type: 3}
     maxScore: 0
     maxCombo: 0
-  - title: Test2
-    artist: A
-    bpm: 100
-    level: 2
-    albumCover: {fileID: 2800000, guid: 766d15646e110714dbae026a5f056998, type: 3}
-    musicInfo: {fileID: 8300000, guid: f17ecb7275aa8fd4c9d1813a0647d6c0, type: 3}
-    beatmap: {fileID: 4900000, guid: e4ae32bc1d6529b458dbf9a50dbf0131, type: 3}
+  - title: "\uD55C \uD398\uC774\uC9C0\uAC00 \uB420 \uC218 \uC788\uAC8C"
+    artist: DAY6
+    bpm: 170
+    level: 3
+    albumCover: {fileID: 2800000, guid: 2e8b956125f132546a95c0b4c83e5181, type: 3}
+    musicInfo: {fileID: 8300000, guid: 61314c51be3937040b5cad7184c88df4, type: 3}
+    beatmap: {fileID: 4900000, guid: e643a3251f1b3264582bb27072e9169a, type: 3}
     maxScore: 0
     maxCombo: 0
   menuBGM: {fileID: 8300000, guid: f17ecb7275aa8fd4c9d1813a0647d6c0, type: 3}
